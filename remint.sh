@@ -37,17 +37,18 @@ EDITOR=""
 
 # Variables values below can be toggled from the TUI, those are default values
 # The script has not been tested extensively with different defaults
-COLOR="-@2"     # COLOR="" to disable, COLOR="-@1" for 256 colors only
-FORMAT="1"      # FORMAT="1" means 24h format, FORMAT="0" means am/pm  
-VIEW="calendar" # Or VIEW="list"
-SHOWDOY="yes"   # SHOWDOY="no" to hide dat of year by default
-SPAN="4"        # Number of weeks or months to show by default
-PREFIX="+"      # If PREFIX="+", then SPAN is expressed in weeks,
-		# else if PREFIX="", SPAN is expresed in months
-UNIT="weeks"    # Tied to PREFIX: use UNIT="weeks" if PREFIX="+",
-		# else UNIT="month"
-SPACING=""      # SPACING="" for fixed cell spacing,
-		# else SPACING=",n,m" where n and m are numbers
+COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
+FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm  
+VIEW="calendar"     # Or VIEW="list"
+COLORINVERTED="yes" # Or COLORINVERTED="no" to default to light or dark window
+SHOWDOY="yes"       # SHOWDOY="no" to hide dat of year by default
+SPAN="4"            # Number of weeks or months to show by default
+PREFIX="+"          # If PREFIX="+", then SPAN is expressed in weeks,
+		    # else if PREFIX="", SPAN is expresed in months
+UNIT="weeks"        # Tied to PREFIX: use UNIT="weeks" if PREFIX="+",
+		    # else UNIT="month"
+SPACING=""          # SPACING="" for fixed cell spacing,
+		    # else SPACING=",n,m" where n and m are numbers
 
 # Functions
 help() {
@@ -91,10 +92,23 @@ $indent   \033[7m   b \033[0m  Back up data
 
 $indent © 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 "
+    read -rsn1
+    case $REPLY in
+        "I" | "i")
+            invertcolors
+            help
+            read -rsn1 ;;
+        *)
+            ui ;;
+    esac
 }
 
 page() {
     checkgeom
+    if [[ "$COLORINVERTED" = "yes" ]]; then
+        printf '\e[?5h'
+    fi
+
     unset REPLY
     if [[ "${REF:0:4}" -lt "1990" ]]; then
         tput cup $((LINES-2)) 22
@@ -246,7 +260,7 @@ ui() {
             ui ;;
         
         "E" | "e")
-            if [[ -v COLORINVERTED ]]; then
+            if [[ "$COLORINVERTED" = "yes" ]]; then
                 printf '\e[?5l'
             fi
             if ! [[ "$EDITOR" = "" ]]; then
@@ -268,7 +282,7 @@ ui() {
                     nano +2 "$FILE"
                 fi
     	    fi
-            if [[ -v COLORINVERTED ]]; then
+            if [[ "$COLORINVERTED" = "yes" ]]; then
                 printf '\e[?5h'
             fi
             ui ;;
@@ -288,25 +302,16 @@ ui() {
             ui ;;
         
         "O" | "o")
-	    overview
-	    ;;
+	    overview ;;
         
         "I" | "i")
-            clear
-            if [[ -v COLORINVERTED ]]; then
-                printf '\e[?5l'
-        	unset COLORINVERTED
-            else
-                printf '\e[?5h'
-        	COLORINVERTED="yes"
-            fi
-            ui ;;
-
+	    invertcolors
+	    ui ;;
+	    
         "?")
             checkgeom
             help
-            read -rsn1
-            ui ;;
+            ;;
     esac
 }
 
@@ -316,19 +321,22 @@ overview() {
     read -rsn1
     case $REPLY in
         "," | "Y" | "P" | "p")
-        clear && cal -wmy "$((${REF:0:4}-1))" | center
-        REF=$(date -d "$REF-1 year" "+%Y-%m-%d")
-        overview ;;
+            clear && cal -wmy "$((${REF:0:4}-1))" | center
+            REF=$(date -d "$REF-1 year" "+%Y-%m-%d")
+            overview ;;
         "." | "y" | "N" | "n")
-        clear && cal -wmy "$((${REF:0:4}+1))" | center
-        REF=$(date -d "$REF++1 year" "+%Y-%m-%d")
-        overview ;;
+            clear && cal -wmy "$((${REF:0:4}+1))" | center
+            REF=$(date -d "$REF++1 year" "+%Y-%m-%d")
+            overview ;;
         "/" | "G" | "g")
-        clear && cal -wmy "$((${REF:0:4}+1))" | center
-        goto
-        overview ;;
+            clear && cal -wmy "$((${REF:0:4}+1))" | center
+            goto
+            overview ;;
+        "I" | "i")
+            invertcolors
+            overview ;;
         *)
-        ui ;;
+            ui ;;
     esac
 }
 
@@ -356,6 +364,17 @@ goto() {
         REF=$(date -d "$REPLY" "+%Y-%m-%d")
     fi
     DOY="($(date -d "$REF" "+%j"))"
+}
+
+invertcolors() {
+    clear
+    if [[ "$COLORINVERTED" = "yes" ]]; then
+        printf '\e[?5l'
+	COLORINVERTED="no"
+    else
+        printf '\e[?5h'
+	COLORINVERTED="yes"
+    fi
 }
 
 center() {
