@@ -1,20 +1,27 @@
 ```
-                                            88                ,d
-                                            °°                88     
-8b,dPPYba,   ,adPPYba,  88,dPYba,,adPYba,   88  8b,dPPYba,  MM88MMM
-88P°   °Y8  a8P_____88  88P°   °88°    °8a  88  88P°   '°8a   88
-88          8PP°°°°°°°  88      88      88  88  88       88   88
-88          °8b,   ,aa  88      88      88  88  88       88   88,    
-88           '°Ybbd8°°  88      88      88  88  88       88   °Y888
-
-A simple terminal UI wrapper for D. Skoll's Remind calendar program
+                                                 88                ,d
+                                                 °°                88     
+     8b,dPPYba,   ,adPPYba,  88,dPYba,,adPYba,   88  8b,dPPYba,  MM88MMM
+     88P°   °Y8  a8P_____88  88P°   °88°    °8a  88  88P°   '°8a   88
+     88          8PP°°°°°°°  88      88      88  88  88       88   88
+     88          °8b,   ,aa  88      88      88  88  88       88   88,    
+     88           '°Ybbd8°°  88      88      88  88  88       88   °Y888
+     
+     A simple terminal UI wrapper for D. Skoll's Remind calendar program
 ```
 
 `remint` is a simple wrapper script to add interactions and navigation to the terminal outputs of D. Skoll's [Remind scripting calendar program](https://salsa.debian.org/dskoll/remind).
 
 Usage: make sure Dianne Skoll's `remind` is intalled and that `remint.sh` is executable with `chmod +x /path/to/remint.sh`, then run with `./remint.sh /path/to/a/reminders/file`. `remint` will try to find a file in a default location if none is supplied as argument. I use it as a script executed in a new terminal window when clicking on the clock of my system bar.
 
-![](demo/remint.mp4)
+[See short demo video here](demo/remint.mp4).
+
+![](demo/shot0001.jpg)
+![](demo/shot0002.jpg)
+![](demo/shot0003.jpg)
+![](demo/shot0004.jpg)
+![](demo/shot0005.jpg)
+![](demo/shot0006.jpg)
 
 ```
 NAVIGATION
