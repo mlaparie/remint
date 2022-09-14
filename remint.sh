@@ -31,7 +31,7 @@ sleep 0.05 # Give the terminal some time to spawn if not already opened
 tput civis
 REF=$(date "+%Y-%m-%d")
 
-# Set your preferred EDITOR and adjust line 225 to programmatically insert
+# Set your preferred EDITOR and adjust line 240 to programmatically insert
 # selected date in the data file when adding an event
 EDITOR=""
 
@@ -40,7 +40,7 @@ EDITOR=""
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
 FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm  
 VIEW="calendar"     # Or VIEW="list"
-COLORINVERTED="yes" # Or COLORINVERTED="no" to default to light or dark window
+COLORINVERTED="no"  # Or COLORINVERTED="yes" to default to light or dark window
 SHOWDOY="yes"       # SHOWDOY="no" to hide dat of year by default
 SPAN="4"            # Number of weeks or months to show by default
 PREFIX="+"          # If PREFIX="+", then SPAN is expressed in weeks,
@@ -232,8 +232,9 @@ ui() {
             ui ;;
         
         "A" | "a")
-            if [[ -v COLORINVERTED ]]; then
-                printf '\e[?5l'
+            if [[ "$COLORINVERTED" = "yes" ]]; then
+                invertcolors
+        	COLORINVERTED="yes"
             fi
             if ! [[ "$EDITOR" = "" ]]; then
                 $EDITOR +2 "$FILE" # Adjust to insert $REF programmatically
@@ -249,22 +250,24 @@ ui() {
                 elif
                     type "$(which vi)" > /dev/null; then
                     vi +2 "$FILE" # How to insert $REF programmatically?
-        	    else
+                else
                     type "$(which nano)" > /dev/null
                     nano +2 "$FILE" # How to insert $REF programmatically?
                 fi
     	    fi
-            if [[ -v COLORINVERTED ]]; then
-                printf '\e[?5h'
+            if [[ "$COLORINVERTED" = "yes" ]]; then
+                invertcolors
+        	COLORINVERTED="yes"
             fi
             ui ;;
         
         "E" | "e")
             if [[ "$COLORINVERTED" = "yes" ]]; then
-                printf '\e[?5l'
+                invertcolors
+        	COLORINVERTED="yes"
             fi
             if ! [[ "$EDITOR" = "" ]]; then
-                $EDITOR +2 "$FILE" # Adjust to insert $REF programmatically
+                $EDITOR +2 "$FILE"
             else
                 if type "$(which kak)" > /dev/null; then
                     kak +2 "$FILE"
@@ -277,13 +280,14 @@ ui() {
                 elif
                     type "$(which vi)" > /dev/null; then
                     vi +2 "$FILE"
-        	    else
+                else
                     type "$(which nano)" > /dev/null
                     nano +2 "$FILE"
                 fi
     	    fi
             if [[ "$COLORINVERTED" = "yes" ]]; then
-                printf '\e[?5h'
+                invertcolors
+        	COLORINVERTED="yes"
             fi
             ui ;;
         
