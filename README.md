@@ -10,7 +10,7 @@
 A simple terminal UI wrapper for D. Skoll's Remind calendar program
 ```
 
-`remint` is a simple wrapper script to add interactions and navigation to the terminal outputs of D. Skoll's Remind scripting calendar program.
+`remint` is a simple wrapper script to add interactions and navigation to the terminal outputs of D. Skoll's [Remind scripting calendar program](https://salsa.debian.org/dskoll/remind).
 
 Usage: make sure Dianne Skoll's `remind` is intalled and that `remint.sh` is executable with `chmod +x /path/to/remint.sh`, then run with `./remint.sh /path/to/a/reminders/file`. `remint` will try to find a file in a default location if none is supplied as argument. I use it as a script executed in a new terminal window when clicking on the clock of my system bar.
 
