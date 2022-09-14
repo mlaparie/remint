@@ -97,8 +97,8 @@ page() {
     checkgeom
     unset REPLY
     if [[ "${REF:0:4}" -lt "1990" ]]; then
-        tput cup $((LINES-2))
-        printf "\033[7m > \033[0m %s   \033[7m !! \033[0m Error: Remind does not support dates earlier than 1990." "$REF"
+        tput cup $((LINES-2)) 22
+        printf "\033[7m !! \033[0m Error: Remind does not support dates earlier than 1990." "$REF"
         read -rsn1
         REF="1990-01-01"
     fi
@@ -275,38 +275,16 @@ ui() {
         
         "B" | "b")
             cp "$FILE" "$FILE"_backup_"$(date +'%Y%m%d_%H%M')" || err=1
-            tput cup $((LINES-2))
+            tput cup $((LINES-2)) 22
             if [[ "$err" -eq "1" ]]; then
-                printf "\033[7m > \033[0m %s   \033[7m >_ \033[0m Failed to back up data." "$REF"
+                printf "\033[7m >_ \033[0m Failed to back up data." "$REF"
             else
-                printf "\033[7m > \033[0m %s   \033[7m >_ \033[0m Data successfully backed up." "$REF"
+                printf "\033[7m >_ \033[0m Data successfully backed up." "$REF"
             fi
             sleep 2 && ui ;;
         
         "/" | "G" | "g")
-            tput cup $((LINES-2))
-            printf "\033[7m > \033[0m %s   \033[7m >_ \033[0m Go to year or date: " "$REF"
-            read -r
-            tput cup $((LINES-2))
-            if [[ "$REPLY" = "" ]]; then
-                REF=$(date "+%Y-%m-%d")
-            elif [[ "${#REPLY}" -eq "4" ]] && ! [[ "${REPLY:0:4}" -lt "1990" ]]
-            then
-                TMP="${REF:6:10}"
-                REF=$(date -d "$(date "+$REPLY-$TMP")" "+%Y-%m-%d")
-            elif ! date -d "$REPLY" > /dev/null 2>&1; then
-                printf "\033[7m > \033[0m %s   \033[7m !! \033[0m Go to year or date: invalid date." "$REF"
-                read -rsn1
-            elif ! [[ "${REPLY:0:4}" =~ ^-?[0-9]+$ ]]; then
-                printf "\033[7m > \033[0m %s   \033[7m !! \033[0m Go to year or date: invalid format." "$REF"
-                read -rsn1
-            elif [[ "${REPLY:0:4}" -lt "1990" ]]; then
-                printf "\033[7m > \033[0m %s   \033[7m !! \033[0m Go to year or date: Remind does not support dates earlier than 1990." "$REF"
-                read -rsn1
-            else
-                REF=$(date -d "$REPLY" "+%Y-%m-%d")
-            fi
-            DOY="($(date -d "$REF" "+%j"))"
+            goto
             ui ;;
         
         "O" | "o")
@@ -344,10 +322,40 @@ overview() {
         "." | "y" | "N" | "n")
         clear && cal -wmy "$((${REF:0:4}+1))" | center
         REF=$(date -d "$REF++1 year" "+%Y-%m-%d")
-        overview;;
+        overview ;;
+        "/" | "G" | "g")
+        clear && cal -wmy "$((${REF:0:4}+1))" | center
+        goto
+        overview ;;
         *)
         ui ;;
     esac
+}
+
+goto() {
+    tput cup $((LINES-2)) 22
+    printf "\033[7m >_ \033[0m Go to year or date: "
+    read -r
+    tput cup $((LINES-2)) 22
+    if [[ "$REPLY" = "" ]]; then
+        REF=$(date "+%Y-%m-%d")
+    elif [[ "${#REPLY}" -eq "4" ]] && ! [[ "${REPLY:0:4}" -lt "1990" ]]
+    then
+        TMP="${REF:6:10}"
+        REF=$(date -d "$(date "+$REPLY-$TMP")" "+%Y-%m-%d")
+    elif ! date -d "$REPLY" > /dev/null 2>&1; then
+        printf "\033[7m !! \033[0m Go to year or date: invalid date." "$REF"
+        read -rsn1
+    elif ! [[ "${REPLY:0:4}" =~ ^-?[0-9]+$ ]]; then
+        printf "\033[7m !! \033[0m Go to year or date: invalid format." "$REF"
+        read -rsn1
+    elif [[ "${REPLY:0:4}" -lt "1990" ]]; then
+        printf "\033[7m !! \033[0m Go to year or date: Remind does not support dates earlier than 1990." "$REF"
+        read -rsn1
+    else
+        REF=$(date -d "$REPLY" "+%Y-%m-%d")
+    fi
+    DOY="($(date -d "$REF" "+%j"))"
 }
 
 center() {
