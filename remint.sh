@@ -310,10 +310,8 @@ ui() {
             ui ;;
         
         "O" | "o")
-            clear
-            cal -wmy "${REF:0:4}" | center
-            read -rsn1
-            ui ;;
+	    overview
+	    ;;
         
         "I" | "i")
             clear
@@ -331,6 +329,24 @@ ui() {
             help
             read -rsn1
             ui ;;
+    esac
+}
+
+overview() {
+    clear
+    cal -wmy "${REF:0:4}" | center
+    read -rsn1
+    case $REPLY in
+        "," | "Y" | "P" | "p")
+        clear && cal -wmy "$((${REF:0:4}-1))" | center
+        REF=$(date -d "$REF-1 year" "+%Y-%m-%d")
+        overview ;;
+        "." | "y" | "N" | "n")
+        clear && cal -wmy "$((${REF:0:4}+1))" | center
+        REF=$(date -d "$REF++1 year" "+%Y-%m-%d")
+        overview;;
+        *)
+        ui ;;
     esac
 }
 
