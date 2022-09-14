@@ -122,7 +122,7 @@ page() {
         remind $COLOR -mcu$PREFIX$SPAN -b$FORMAT -w"$COLS""$SPACING" "$FILE" $REF
     else
         if [[ "$UNIT" = "weeks" ]]; then
-            printf "\033[7m $(date -d $REF-1day '+%Y-%m-%d') to $(date -d $REF+4weeks-2days '+%Y-%m-%d') (4 weeks) \033[0m\n\n"
+            printf "\033[7m Weeks $(date -d $REF '+%W') to $(date -d $REF+3weeks '+%W (%Y)') \033[0m\n\n"
         else
             printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
         fi
