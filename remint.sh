@@ -80,8 +80,8 @@ $indent   \033[7m   f \033[0m  Toggle cell spacing (fixed vs. collapsed)
 $indent   \033[7m   i \033[0m  Invert colors
 $indent   \033[7m   c \033[0m  Toggle Remind colors
 $indent   \033[7m : x \033[0m  Toggle 24h format
+$indent   \033[7m   d \033[0m  Toggle day of the year
 $indent   \033[7m   o \033[0m  Show simple year overview
-$indent   \033[7m   d \033[0m  Show day of year
 $indent   \033[7m   ? \033[0m  Show this help
 
 $indent DATA

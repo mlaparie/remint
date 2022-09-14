@@ -39,8 +39,8 @@ VIEW
      i   Invert colors
      c   Toggle Remind colors
    : x   Toggle 24h format
+     d   Toggle day of the year
      o   Show simple year overview
-     d   Show day of year
      ?   Show this help
 
 DATA
