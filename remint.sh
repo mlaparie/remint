@@ -31,14 +31,14 @@ sleep 0.05 # Give the terminal some time to spawn if not already opened
 tput civis
 REF=$(date "+%Y-%m-%d")
 
-# Set your preferred EDITOR and adjust line 240 to programmatically insert
+# Set your preferred EDITOR and adjust line 245 to programmatically insert
 # selected date in the data file when adding an event
 EDITOR=""
 
 # Variables values below can be toggled from the TUI, those are default values
 # The script has not been tested extensively with different defaults
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
-FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm  
+FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm
 VIEW="calendar"     # Or VIEW="list"
 COLORINVERTED="no"  # Or COLORINVERTED="yes" to default to light or dark window
 SHOWDOY="yes"       # SHOWDOY="no" to hide dat of year by default
@@ -69,8 +69,8 @@ $indent A simple terminal UI wrapper for D. Skoll's Remind calendar program
 $indent NAVIGATION
 $indent   \033[7m , p \033[0m  Previous page   \033[7m     t \033[0m  Today
 $indent   \033[7m . n \033[0m  Next page       \033[7m     g \033[0m  Go to
-$indent   \033[7m h/l \033[0m  -1/+1 day       \033[7m Esc q \033[0m  Quit
-$indent   \033[7m k/j \033[0m  -1/+1 week
+$indent   \033[7m h/l \033[0m  -1/+1 day       \033[7m     q \033[0m  Quit
+$indent   \033[7m k/j \033[0m  -1/+1 wee       \033[7m other \033[0m  Quit with prompt
 $indent   \033[7m M/m \033[0m  -1/+1 month
 $indent   \033[7m Y/y \033[0m  -1/+1 year
 
@@ -105,16 +105,21 @@ $indent © 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 
 page() {
     checkgeom
+    unset REPLY
     if [[ "$COLORINVERTED" = "yes" ]]; then
         printf '\e[?5h'
     fi
 
-    unset REPLY
     if [[ "${REF:0:4}" -lt "1990" ]]; then
         tput cup $((LINES-2)) 22
-        printf "\033[7m !! \033[0m Error: Remind does not support dates earlier than 1990." "$REF"
-        read -rsn1
+        printf "\033[7m !! \033[0m Error: years before 1990 are not supported by Remind."
         REF="1990-01-01"
+        read -rsn1
+    elif  [[ "${REF:0:4}" -gt "5990" ]]; then
+        tput cup $((LINES-2)) 22
+        printf "\033[7m !! \033[0m Error: years ofter 5990 are not supported by Remind. I know that frustration."
+        REF="5990-12-31"
+        read -rsn1
     fi
     
     clear
@@ -297,7 +302,7 @@ ui() {
             if [[ "$err" -eq "1" ]]; then
                 printf "\033[7m >_ \033[0m Failed to back up data." "$REF"
             else
-                printf "\033[7m >_ \033[0m Data successfully backed up." "$REF"
+                printf "\033[7m >_ \033[0m Data successfully backed up."
             fi
             sleep 2 && ui ;;
         
@@ -314,8 +319,31 @@ ui() {
 	    
         "?")
             checkgeom
-            help
+            help ;;
+
+        "Q" | "q")
+            exit 0 ;;
+
+        *)
+            tput cup $((LINES-2)) 22
+            printf "\033[7m >_ \033[0m Quit? [Y/n]"
+            read -rsn1
+            case $REPLY in
+                "Y" | "y" | "")
+                    if [[ "$COLORINVERTED" = "yes" ]]; then
+                        invertcolors
+                        exit 0
+                    else
+                        exit 0
+                    fi
+                    ;;
+
+                *)
+		    ui ;;
+		    
+            esac
             ;;
+
     esac
 }
 
@@ -351,18 +379,18 @@ goto() {
     tput cup $((LINES-2)) 22
     if [[ "$REPLY" = "" ]]; then
         REF=$(date "+%Y-%m-%d")
-    elif [[ "${#REPLY}" -eq "4" ]] && ! [[ "${REPLY:0:4}" -lt "1990" ]]
+    elif ! [[ "${REPLY:0:4}" =~ ^-?[0-9]+$ ]]; then
+        printf "\033[7m !! \033[0m Go to year or date: invalid format."
+        read -rsn1
+    elif [[ "${#REPLY}" -eq "4" && "${REPLY}" -ge "1990" && "${REPLY}" -le "5990" ]]
     then
         TMP="${REF:6:10}"
         REF=$(date -d "$(date "+$REPLY-$TMP")" "+%Y-%m-%d")
+    elif [[ "${REPLY:0:4}" -lt "1990" || "${REPLY:0:4}" -gt "5990" ]]; then
+        printf "\033[7m !! \033[0m Go to year or date: Remind only supports years within [1990-5990]. We have 4000 years to make history."
+        read -rsn1
     elif ! date -d "$REPLY" > /dev/null 2>&1; then
-        printf "\033[7m !! \033[0m Go to year or date: invalid date." "$REF"
-        read -rsn1
-    elif ! [[ "${REPLY:0:4}" =~ ^-?[0-9]+$ ]]; then
-        printf "\033[7m !! \033[0m Go to year or date: invalid format." "$REF"
-        read -rsn1
-    elif [[ "${REPLY:0:4}" -lt "1990" ]]; then
-        printf "\033[7m !! \033[0m Go to year or date: Remind does not support dates earlier than 1990." "$REF"
+        printf "\033[7m !! \033[0m Go to year or date: invalid date."
         read -rsn1
     else
         REF=$(date -d "$REPLY" "+%Y-%m-%d")
@@ -401,6 +429,13 @@ case "$1" in
             FILE="$HOME/.config/remind/reminders"
         elif [[ -f "$HOME/.reminders" ]]; then
             FILE="$HOME/.reminders"
+        elif [[ -d "$HOME/.reminders" ]] && [[ ! -z "$(ls -A $HOME/.reminders)" ]]
+        then
+            FILE=$(ls -dA $HOME/.reminders/* | head -n 1)
+        elif [[ -d "$HOME/.reminders" ]] && [[ -z "$(ls -A $HOME/.reminders)" ]]
+        then
+            FILE="$HOME/.reminders/100-remint.rem"
+            printf ";; Events\n" > "$FILE"
         else
             printf "Error: no data file found. Provide one as argument or place one in '$HOME/.reminders' or '$HOME/.config/remind/reminders'. Press any key to quit."
             read -rsn1 && exit 1
@@ -408,7 +443,7 @@ case "$1" in
         ui ;;
     
     "h" | "help" | "-h" | "--h" | "-help" | "--help")
-        help && exit 1 ;;
+        help && exit 0 ;;
 
     *)
         if [[ -f "${1-}" ]]; then
