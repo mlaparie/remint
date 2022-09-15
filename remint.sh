@@ -442,8 +442,9 @@ case "$1" in
             FILE="$INPUT/$DEFAULTFILE"
             printf ";; Events\n\n" > "$FILE"
             for f in "$INPUT"/*; do
-            	[[ "$f" != "$FILE" && "$f" != *"_backup_"* ]] && \
-            	printf "INCLUDE $f\n" >> $FILE
+            	[[ "$f" != "$FILE" && "$f" != *"_backup_"* && \
+            		"$f" != *".rem" && "$f" != *".purged" ]] && \
+                	printf "INCLUDE $f\n" >> $FILE
             done
             page && tput cup $((LINES-2)) 22
             printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
