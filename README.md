@@ -25,28 +25,28 @@ Usage: make sure Dianne Skoll's `remind` is intalled and that `remint.sh` is exe
 
 ```
 NAVIGATION
-   , p   Previous page        t   Today
-   . n   Next page            g   Go to
-   h/l   -1/+1 day        Esc q   Quit
-   k/j   -1/+1 week
-   M/m   -1/+1 month
-   Y/y   -1/+1 year
+  , p  Previous page       t  Today
+  . n  Next page           g  Go to
+  h/l  -1/+1 day           q  Quit
+  k/j  -1/+1 wee       other  Quit with prompt
+  M/m  -1/+1 month
+  Y/y  -1/+1 year
 
 VIEW
-   w s   Toggle page span (4 weeks vs. full month)
-     v   Toggle view (calendar vs. list)
-     f   Toggle cell spacing (fixed vs. collapsed)
-     i   Invert colors
-     c   Toggle Remind colors
-   : x   Toggle 24h format
-     d   Toggle day of the year
-     o   Show simple year overview
-     ?   Show this help
+  w s  Toggle page span (4 weeks vs. full month)
+    v  Toggle view (calendar vs. list)
+    f  Toggle cell spacing (fixed vs. collapsed)
+    i  Invert colors
+    c  Toggle Remind colors
+  : x  Toggle 24h format
+    d  Toggle day of the year
+    o  Show simple year overview
+    ?  Show this help
 
 DATA
-     a   Add event at selection
-     e   Edit data file
-     b   Back up data
+    a  Add event at selection
+    e  Edit data file
+    b  Back up data
 
 © 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 ```
