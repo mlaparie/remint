@@ -126,7 +126,8 @@ page() {
     
     clear
     if [[ "$VIEW" = "calendar" ]]; then
-        remind $COLOR -mcu$PREFIX$SPAN -b$FORMAT -w"$COLS""$SPACING" "$INPUT" $REF
+        remind $COLOR -mcu$PREFIX$SPAN -b$FORMAT -w"$COLS""$SPACING" \
+            "$INPUT" $REF
     else
         if [[ "$UNIT" = "weeks" ]]; then
             printf "\033[7m Weeks $(date -d $REF '+%W') to $(date -d $REF+3weeks '+%W (%Y)') \033[0m\n\n"
@@ -384,7 +385,8 @@ goto() {
     elif ! [[ "${REPLY:0:4}" =~ ^-?[0-9]+$ ]]; then
         printf "\033[7m !! \033[0m Go to year or date: invalid format."
         read -rsn1
-    elif [[ "${#REPLY}" -eq "4" && "${REPLY}" -ge "1990" && "${REPLY}" -le "5990" ]]
+    elif [[ "${#REPLY}" -eq "4" && "${REPLY}" -ge "1990" && \
+        "${REPLY}" -le "5990" ]]
     then
         TMP="${REF:6:10}"
         REF=$(date -d "$(date "+$REPLY-$TMP")" "+%Y-%m-%d")
@@ -441,11 +443,11 @@ case "$1" in
 	if [[ -d "$INPUT" && ! -f "$INPUT/100-remint.rem" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
             printf ";; Events\n\n" > "$FILE"
-            for f in "$INPUT"/*; do
-            	[[ "$f" != "$FILE" && "$f" != *"_backup_"* && \
-            		"$f" != *".rem" && "$f" != *".purged" ]] && \
-                	printf "INCLUDE $f\n" >> $FILE
-            done
+#            for f in "$INPUT"/*; do
+#            	[[ "$f" != "$FILE" && "$f" != *"_backup_"* && \
+#            		"$f" != *".rem" && "$f" != *".purged" ]] && \
+#                	printf ";; INCLUDE $f\n" >> $FILE
+#            done
             page && tput cup $((LINES-2)) 22
             printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
             sleep 3
