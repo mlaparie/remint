@@ -392,6 +392,9 @@ goto() {
     elif ! date -d "$REPLY" > /dev/null 2>&1; then
         printf "\033[7m !! \033[0m Go to year or date: invalid date."
         read -rsn1
+    elif [[ $(date -d "$REPLY" "+%Y") -lt "1990" ]]; then
+        printf "\033[7m !! \033[0m Go to year or date: invalid date."
+        read -rsn1
     else
         REF=$(date -d "$REPLY" "+%Y-%m-%d")
     fi
