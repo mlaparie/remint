@@ -142,11 +142,11 @@ page() {
         else
             printf "\033[7m > \033[0m %s \n ?  Help" "$REF"
         fi
-        read -rsn1
 }
 
 ui() {
     page
+    read -rsn1
     case $REPLY in
         "P" | "p" | ",")
             REF=$(date -d "$REF-$SPAN $UNIT" "+%Y-%m-%d") && ui ;;
@@ -300,7 +300,7 @@ ui() {
             cp "$FILE" "$FILE"_backup_"$(date +'%Y%m%d_%H%M')" || err=1
             tput cup $((LINES-2)) 22
             if [[ "$err" -eq "1" ]]; then
-                printf "\033[7m >_ \033[0m Failed to back up data." "$REF"
+                printf "\033[7m >_ \033[0m Failed to back up data."
             else
                 printf "\033[7m >_ \033[0m Data successfully backed up."
             fi
@@ -430,6 +430,16 @@ case "$1" in
     "")
         if [[ -f "$HOME/.config/remind/reminders" ]]; then
             FILE="$HOME/.config/remind/reminders"
+        elif [[ -d "$HOME/.config/remind/reminders" ]] && [[ ! -z "$(ls -A $HOME/.config/remind/reminders)" ]]
+        then
+            FILE=$(ls -dA $HOME/.config/remind/reminders/* | head -n 1)
+        elif [[ -d "$HOME/.config/remind/reminders" ]] && [[ -z "$(ls -A $HOME/.config/remind/reminders)" ]]
+        then
+            FILE="$HOME/.config/remind/reminders/100-remint.rem"
+            printf ";; Events\n" > "$FILE"
+            page && tput cup $((LINES-2)) 22
+            printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
+            sleep 3
         elif [[ -f "$HOME/.reminders" ]]; then
             FILE="$HOME/.reminders"
         elif [[ -d "$HOME/.reminders" ]] && [[ ! -z "$(ls -A $HOME/.reminders)" ]]
@@ -439,8 +449,11 @@ case "$1" in
         then
             FILE="$HOME/.reminders/100-remint.rem"
             printf ";; Events\n" > "$FILE"
+            page && tput cup $((LINES-2)) 22
+            printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
+            sleep 3
         else
-            printf "Error: no data file found. Provide one as argument or place one in '$HOME/.reminders' or '$HOME/.config/remind/reminders'. Press any key to quit."
+            printf "Error: no data file found. Provide one as argument or create one at '$HOME/.config/remind/reminders' or '$HOME/.reminders'. Directories in those places are also valid: if empty, a new file will be created, else the first file in alphabetic order will be picked. Press any key to quit."
             read -rsn1 && exit 1
         fi
         ui ;;
