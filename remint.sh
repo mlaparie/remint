@@ -31,12 +31,14 @@ sleep 0.05 # Give the terminal some time to spawn if not already opened
 tput civis
 REF=$(date "+%Y-%m-%d")
 
-# Set your preferred EDITOR and adjust line 245 to programmatically insert
+# Set your preferred EDITOR and adjust line 247 to programmatically insert
 # selected date in the data file when adding an event
 EDITOR=""
 
 # Variables values below can be toggled from the TUI, those are default values
 # The script has not been tested extensively with different defaults
+DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
+			     # default data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
 FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm
 VIEW="calendar"     # Or VIEW="list"
@@ -124,14 +126,14 @@ page() {
     
     clear
     if [[ "$VIEW" = "calendar" ]]; then
-        remind $COLOR -mcu$PREFIX$SPAN -b$FORMAT -w"$COLS""$SPACING" "$FILE" $REF
+        remind $COLOR -mcu$PREFIX$SPAN -b$FORMAT -w"$COLS""$SPACING" "$INPUT" $REF
     else
         if [[ "$UNIT" = "weeks" ]]; then
             printf "\033[7m Weeks $(date -d $REF '+%W') to $(date -d $REF+3weeks '+%W (%Y)') \033[0m\n\n"
         else
             printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
         fi
-        remind $COLOR -ms$PREFIX$SPAN -b$FORMAT "$FILE" $REF
+        remind $COLOR -ms$PREFIX$SPAN -b$FORMAT "$INPUT" $REF
         printf "\n"
     fi
     
@@ -428,34 +430,29 @@ checkgeom() {
 # Execution
 case "$1" in
     "")
-        if [[ -f "$HOME/.config/remind/reminders" ]]; then
-            FILE="$HOME/.config/remind/reminders"
-        elif [[ -d "$HOME/.config/remind/reminders" ]] && [[ ! -z "$(ls -A $HOME/.config/remind/reminders)" ]]
-        then
-            FILE=$(ls -dA $HOME/.config/remind/reminders/* | head -n 1)
-        elif [[ -d "$HOME/.config/remind/reminders" ]] && [[ -z "$(ls -A $HOME/.config/remind/reminders)" ]]
-        then
-            FILE="$HOME/.config/remind/reminders/100-remint.rem"
-            printf ";; Events\n" > "$FILE"
-            page && tput cup $((LINES-2)) 22
-            printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
-            sleep 3
-        elif [[ -f "$HOME/.reminders" ]]; then
-            FILE="$HOME/.reminders"
-        elif [[ -d "$HOME/.reminders" ]] && [[ ! -z "$(ls -A $HOME/.reminders)" ]]
-        then
-            FILE=$(ls -dA $HOME/.reminders/* | head -n 1)
-        elif [[ -d "$HOME/.reminders" ]] && [[ -z "$(ls -A $HOME/.reminders)" ]]
-        then
-            FILE="$HOME/.reminders/100-remint.rem"
-            printf ";; Events\n" > "$FILE"
-            page && tput cup $((LINES-2)) 22
-            printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
-            sleep 3
+        if [[ -e "$HOME/.config/remind/reminders" ]]; then
+            INPUT="$HOME/.config/remind/reminders"
+        elif [[ -e "$HOME/.reminders" ]]; then
+            INPUT="$HOME/.reminders"
         else
-            printf "Error: no data file found. Provide one as argument or create one at '$HOME/.config/remind/reminders' or '$HOME/.reminders'. Directories in those places are also valid: if empty, a new file will be created, else the first file in alphabetic order will be picked. Press any key to quit."
+            printf "Error: no data file found. Provide one as argument or create one at '$HOME/.config/remind/reminders' or '$HOME/.reminders'. Those can also be directories containing multiple data files, in which case remint will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             read -rsn1 && exit 1
         fi
+	if [[ -d "$INPUT" && ! -f "$INPUT/100-remint.rem" ]]; then
+            FILE="$INPUT/$DEFAULTFILE"
+            printf ";; Events\n\n" > "$FILE"
+            for f in "$INPUT"/*; do
+            	[[ "$f" != "$FILE" && "$f" != *"_backup_"* ]] && \
+            	printf "INCLUDE $f\n" >> $FILE
+            done
+            page && tput cup $((LINES-2)) 22
+            printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
+            sleep 3
+	elif [[ -d "$INPUT" && -f "$INPUT/100-remint.rem" ]]; then
+            FILE="$INPUT/$DEFAULTFILE"
+	elif [[ -f "$INPUT" ]]; then
+            FILE="$INPUT"
+	fi
         ui ;;
     
     "h" | "help" | "-h" | "--h" | "-help" | "--help")
@@ -463,7 +460,7 @@ case "$1" in
 
     *)
         if [[ -f "${1-}" ]]; then
-            FILE="${1}"
+            INPUT="${1}"
         else
             printf "Error: invalid data file. Press any key to quit."
             read -rsn1 && exit 1
