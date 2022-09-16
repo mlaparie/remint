@@ -149,206 +149,208 @@ page() {
 }
 
 ui() {
-    page
-    read -rsn1
-    case $REPLY in
-        "P" | "p" | ",")
-            REF=$(date -d "$REF-$SPAN $UNIT" "+%Y-%m-%d") && ui ;;
-        
-        "N" | "n" | ".")
-            REF=$(date -d "$REF+$SPAN $UNIT" "+%Y-%m-%d") && ui ;;
-        
-        "Y")
-            REF=$(date -d "$REF-1 year" "+%Y-%m-%d") && ui ;;
-        
-        "y")
-            REF=$(date -d "$REF+1 year" "+%Y-%m-%d") && ui ;;
-        
-        "M")
-            REF=$(date -d "$REF-1 month" "+%Y-%m-%d") && ui ;;
-        
-        "m")
-            REF=$(date -d "$REF+1 month" "+%Y-%m-%d") && ui ;;
-        
-        "K"| "k")
-            REF=$(date -d "$REF-1 week" "+%Y-%m-%d") && ui ;;
-        
-        "J" | "j")
-            REF=$(date -d "$REF+1 week" "+%Y-%m-%d") && ui ;;
-        
-        "h"| "H")
-            REF=$(date -d "$REF-1 day" "+%Y-%m-%d") && ui ;;
-        
-        "L" | "l")
-            REF=$(date -d "$REF+1 day" "+%Y-%m-%d") && ui ;;
-        
-        "T" | "t")
-            REF=$(date "+%Y-%m-%d") && ui ;;
-        
-        "V" | "v")
-            if [[ "$VIEW" = "calendar" ]]; then
-                VIEW="list"
-            else
-                VIEW="calendar"
-            fi
-            ui ;;
-        
-        "X" | "x" | ":")
-            if [[ "$FORMAT" -eq "1" ]]; then
-                FORMAT=0
-            else
-                FORMAT=1
-            fi
-            ui ;;
-        
-        "D" | "d")
-            clear
-            if [[ "$SHOWDOY" = "yes" ]]; then
-                SHOWDOY="no"
-            else
-                SHOWDOY="yes"
-            fi
-            ui ;;
-        
-        "C" | "c")
-            if [[ "$COLOR" = "-@2" ]]; then
-                COLOR=""
-            else
-                COLOR="-@2"
-            fi
-            ui ;;
-        
-        "W" | "w" | "S" | "s")
-            if [[ "$SPAN" -eq "4" ]]; then 
-                PREFIX=""
-                SPAN="1"
-                UNIT="month"
-                SPACING=",0,0"
-            else
-                PREFIX="+"
-                SPAN="4"
-                UNIT="weeks"
-                SPACING=""
-            fi
-            ui ;;
-        
-        "F" | "f")
-            if [[ "$SPACING" = ",0,0" ]]; then
-                SPACING=""
-            else
-                SPACING=",0,0"
-            fi
-            ui ;;
-        
-        "A" | "a")
-            if [[ "$COLORINVERTED" = "yes" ]]; then
-                invertcolors
-        	COLORINVERTED="yes"
-            fi
-            if ! [[ "$EDITOR" = "" ]]; then
-                $EDITOR +2 "$FILE" # Adjust to insert $REF programmatically
-            else
-                if type kak &> /dev/null; then
-                    kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
-                elif
-                    type emacs &> /dev/null; then
-                    emacs -nw +2 "$FILE" # How to insert $REF programmatically?
-                elif
-                    type vim &> /dev/null; then
-                    vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
-                elif
-                    type vi &> /dev/null; then
-                    vi +2 "$FILE" # How to insert $REF programmatically?
+    while true ; do
+        page
+        read -rsn1
+        case $REPLY in
+            "P" | "p" | ",")
+                REF=$(date -d "$REF-$SPAN $UNIT" "+%Y-%m-%d") && continue ;;
+            
+            "N" | "n" | ".")
+                REF=$(date -d "$REF+$SPAN $UNIT" "+%Y-%m-%d") && continue ;;
+            
+            "Y")
+                REF=$(date -d "$REF-1 year" "+%Y-%m-%d") && continue ;;
+            
+            "y")
+                REF=$(date -d "$REF+1 year" "+%Y-%m-%d") && continue ;;
+            
+            "M")
+                REF=$(date -d "$REF-1 month" "+%Y-%m-%d") && continue ;;
+            
+            "m")
+                REF=$(date -d "$REF+1 month" "+%Y-%m-%d") && continue ;;
+            
+            "K"| "k")
+                REF=$(date -d "$REF-1 week" "+%Y-%m-%d") && continue ;;
+            
+            "J" | "j")
+                REF=$(date -d "$REF+1 week" "+%Y-%m-%d") && continue ;;
+            
+            "h"| "H")
+                REF=$(date -d "$REF-1 day" "+%Y-%m-%d") && continue ;;
+            
+            "L" | "l")
+                REF=$(date -d "$REF+1 day" "+%Y-%m-%d") && continue ;;
+            
+            "T" | "t")
+                REF=$(date "+%Y-%m-%d") && continue ;;
+            
+            "V" | "v")
+                if [[ "$VIEW" = "calendar" ]]; then
+                    VIEW="list"
                 else
-                    type nano &> /dev/null
-                    nano +2 "$FILE" # How to insert $REF programmatically?
+                    VIEW="calendar"
                 fi
-    	    fi
-            if [[ "$COLORINVERTED" = "yes" ]]; then
-                invertcolors
-        	COLORINVERTED="yes"
-            fi
-            ui ;;
-        
-        "E" | "e")
-            if [[ "$COLORINVERTED" = "yes" ]]; then
-                invertcolors
-        	COLORINVERTED="yes"
-            fi
-            if ! [[ "$EDITOR" = "" ]]; then
-                $EDITOR "$FILE"
-            else
-                if type kak &> /dev/null; then
-                    kak "$FILE"
-                elif
-                    type emacs &> /dev/null; then
-                    emacs -nw "$FILE"
-                elif
-                    type vim &> /dev/null; then
-                    vim "$FILE"
-                elif
-                    type vi &> /dev/null; then
-                    vi "$FILE"
+                continue ;;
+            
+            "X" | "x" | ":")
+                if [[ "$FORMAT" -eq "1" ]]; then
+                    FORMAT=0
                 else
-                    type nano &> /dev/null
-                    nano "$FILE"
+                    FORMAT=1
                 fi
-    	    fi
-            if [[ "$COLORINVERTED" = "yes" ]]; then
-                invertcolors
-        	COLORINVERTED="yes"
-            fi
-            ui ;;
-        
-        "B" | "b")
-            cp "$FILE" "$FILE"_backup_"$(date +'%Y%m%d_%H%M')" || err=1
-            tput cup $((LINES-2)) 22
-            if [[ "$err" -eq "1" ]]; then
-                printf "\033[7m >_ \033[0m Failed to back up data."
-            else
-                printf "\033[7m >_ \033[0m Data successfully backed up."
-            fi
-            sleep 2 && ui ;;
-        
-        "/" | "G" | "g")
-            goto
-            ui ;;
-        
-        "O" | "o")
-	    overview ;;
-        
-        "I" | "i")
-	    invertcolors
-	    ui ;;
-	    
-        "?")
-            checkgeom
-            help ;;
-
-        "Q" | "q")
-            tput cnorm && exit 0 ;;
-
-        *)
-            tput cup $((LINES-2)) 22
-            printf "\033[7m >_ \033[0m Quit? [Y/n]"
-            read -rsn1
-            case $REPLY in
-                "Y" | "y" | "")
-                    if [[ "$COLORINVERTED" = "yes" ]]; then
-                        invertcolors
-                        tput cnorm && exit 0
+                continue ;;
+            
+            "D" | "d")
+                clear
+                if [[ "$SHOWDOY" = "yes" ]]; then
+                    SHOWDOY="no"
+                else
+                    SHOWDOY="yes"
+                fi
+                continue ;;
+            
+            "C" | "c")
+                if [[ "$COLOR" = "-@2" ]]; then
+                    COLOR=""
+                else
+                    COLOR="-@2"
+                fi
+                continue ;;
+            
+            "W" | "w" | "S" | "s")
+                if [[ "$SPAN" -eq "4" ]]; then 
+                    PREFIX=""
+                    SPAN="1"
+                    UNIT="month"
+                    SPACING=",0,0"
+                else
+                    PREFIX="+"
+                    SPAN="4"
+                    UNIT="weeks"
+                    SPACING=""
+                fi
+                continue ;;
+            
+            "F" | "f")
+                if [[ "$SPACING" = ",0,0" ]]; then
+                    SPACING=""
+                else
+                    SPACING=",0,0"
+                fi
+                ui ;;
+            
+            "A" | "a")
+                if [[ "$COLORINVERTED" = "yes" ]]; then
+                    invertcolors
+            	COLORINVERTED="yes"
+                fi
+                if ! [[ "$EDITOR" = "" ]]; then
+                    $EDITOR +2 "$FILE" # Adjust to insert $REF programmatically
+                else
+                    if type kak &> /dev/null; then
+                        kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
+                    elif
+                        type emacs &> /dev/null; then
+                        emacs -nw +2 "$FILE" # How to insert $REF programmatically?
+                    elif
+                        type vim &> /dev/null; then
+                        vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
+                    elif
+                        type vi &> /dev/null; then
+                        vi +2 "$FILE" # How to insert $REF programmatically?
                     else
-                        tput cnorm && exit 0
+                        type nano &> /dev/null
+                        nano +2 "$FILE" # How to insert $REF programmatically?
                     fi
-                    ;;
+        	    fi
+                if [[ "$COLORINVERTED" = "yes" ]]; then
+                    invertcolors
+            	COLORINVERTED="yes"
+                fi
+                ui ;;
+            
+            "E" | "e")
+                if [[ "$COLORINVERTED" = "yes" ]]; then
+                    invertcolors
+            	COLORINVERTED="yes"
+                fi
+                if ! [[ "$EDITOR" = "" ]]; then
+                    $EDITOR "$FILE"
+                else
+                    if type kak &> /dev/null; then
+                        kak "$FILE"
+                    elif
+                        type emacs &> /dev/null; then
+                        emacs -nw "$FILE"
+                    elif
+                        type vim &> /dev/null; then
+                        vim "$FILE"
+                    elif
+                        type vi &> /dev/null; then
+                        vi "$FILE"
+                    else
+                        type nano &> /dev/null
+                        nano "$FILE"
+                    fi
+        	    fi
+                if [[ "$COLORINVERTED" = "yes" ]]; then
+                    invertcolors
+            	COLORINVERTED="yes"
+                fi
+                continue ;;
+            
+            "B" | "b")
+                cp "$FILE" "$FILE"_backup_"$(date +'%Y%m%d_%H%M')" || err=1
+                tput cup $((LINES-2)) 22
+                if [[ "$err" -eq "1" ]]; then
+                    printf "\033[7m >_ \033[0m Failed to back up data."
+                else
+                    printf "\033[7m >_ \033[0m Data successfully backed up."
+                fi
+                sleep 2 && ui ;;
+            
+            "/" | "G" | "g")
+                goto
+                continue ;;
+            
+            "O" | "o")
+    	    overview ;;
+            
+            "I" | "i")
+    	    invertcolors
+    	    continue ;;
+    	    
+            "?")
+                checkgeom
+                help ;;
 
-                *)
-		    ui ;;
-		    
-            esac
-            ;;
+            "Q" | "q")
+                tput cnorm && exit 0 ;;
 
-    esac
+            *)
+                tput cup $((LINES-2)) 22
+                printf "\033[7m >_ \033[0m Quit? [Y/n]"
+                read -rsn1
+                case $REPLY in
+                    "Y" | "y" | "")
+                        if [[ "$COLORINVERTED" = "yes" ]]; then
+                            invertcolors
+                            tput cnorm && exit 0
+                        else
+                            tput cnorm && exit 0
+                        fi
+                        ;;
+
+                    *)
+    		    continue ;;
+    		    
+                esac
+                ;;
+
+        esac
+    done
 }
 
 overview() {
@@ -372,7 +374,7 @@ overview() {
             invertcolors
             overview ;;
         *)
-            ui ;;
+            return ;;
     esac
 }
 
