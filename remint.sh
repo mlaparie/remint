@@ -31,9 +31,10 @@ sleep 0.05 # Give the terminal some time to spawn if not already opened
 tput civis
 REF=$(date "+%Y-%m-%d")
 
-# Set your preferred EDITOR and adjust line 247 to programmatically insert
-# selected date in the data file when adding an event
-EDITOR=""
+# If not already set in your environment, set your preferred EDITOR at the end
+# of the line below, and adjust line 249 to programmatically insert selected
+# date in the data file when adding an event
+[[ ! -v EDITOR ]] || EDITOR=""
 
 # Variables values below can be toggled from the TUI, those are default values
 # The script has not been tested extensively with different defaults
@@ -72,7 +73,7 @@ $indent NAVIGATION
 $indent   \033[7m , p \033[0m  Previous page   \033[7m     t \033[0m  Today
 $indent   \033[7m . n \033[0m  Next page       \033[7m     g \033[0m  Go to
 $indent   \033[7m h/l \033[0m  -1/+1 day       \033[7m     q \033[0m  Quit
-$indent   \033[7m k/j \033[0m  -1/+1 wee       \033[7m other \033[0m  Quit with prompt
+$indent   \033[7m k/j \033[0m  -1/+1 week      \033[7m other \033[0m  Quit with prompt
 $indent   \033[7m M/m \033[0m  -1/+1 month
 $indent   \033[7m Y/y \033[0m  -1/+1 year
 
@@ -247,19 +248,19 @@ ui() {
             if ! [[ "$EDITOR" = "" ]]; then
                 $EDITOR +2 "$FILE" # Adjust to insert $REF programmatically
             else
-                if type "$(which kak)" > /dev/null; then
+                if type kak &> /dev/null; then
                     kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
                 elif
-                    type "$(which emacs)" > /dev/null; then
-                    emacs -nw +2  "$FILE" # How to insert $REF programmatically?
+                    type emacs &> /dev/null; then
+                    emacs -nw +2 "$FILE" # How to insert $REF programmatically?
                 elif
-                    type "$(which vim)" > /dev/null; then
-                    vim +2 "$FILE" # How to insert $REF programmatically?
+                    type vim &> /dev/null; then
+                    vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
                 elif
-                    type "$(which vi)" > /dev/null; then
+                    type vi &> /dev/null; then
                     vi +2 "$FILE" # How to insert $REF programmatically?
                 else
-                    type "$(which nano)" > /dev/null
+                    type nano &> /dev/null
                     nano +2 "$FILE" # How to insert $REF programmatically?
                 fi
     	    fi
@@ -275,22 +276,22 @@ ui() {
         	COLORINVERTED="yes"
             fi
             if ! [[ "$EDITOR" = "" ]]; then
-                $EDITOR +2 "$FILE"
+                $EDITOR "$FILE"
             else
-                if type "$(which kak)" > /dev/null; then
-                    kak +2 "$FILE"
+                if type kak &> /dev/null; then
+                    kak "$FILE"
                 elif
-                    type "$(which emacs)" > /dev/null; then
-                    emacs -nw +2 "$FILE"
+                    type emacs &> /dev/null; then
+                    emacs -nw "$FILE"
                 elif
-                    type "$(which vim)" > /dev/null; then
-                    vim +2 "$FILE"
+                    type vim &> /dev/null; then
+                    vim "$FILE"
                 elif
-                    type "$(which vi)" > /dev/null; then
-                    vi +2 "$FILE"
+                    type vi &> /dev/null; then
+                    vi "$FILE"
                 else
-                    type "$(which nano)" > /dev/null
-                    nano +2 "$FILE"
+                    type nano &> /dev/null
+                    nano "$FILE"
                 fi
     	    fi
             if [[ "$COLORINVERTED" = "yes" ]]; then
@@ -325,7 +326,7 @@ ui() {
             help ;;
 
         "Q" | "q")
-            exit 0 ;;
+            tput cnorm && exit 0 ;;
 
         *)
             tput cup $((LINES-2)) 22
@@ -335,9 +336,9 @@ ui() {
                 "Y" | "y" | "")
                     if [[ "$COLORINVERTED" = "yes" ]]; then
                         invertcolors
-                        exit 0
+                        tput cnorm && exit 0
                     else
-                        exit 0
+                        tput cnorm && exit 0
                     fi
                     ;;
 
@@ -432,13 +433,15 @@ checkgeom() {
 # Execution
 case "$1" in
     "")
-        if [[ -e "$HOME/.config/remind/reminders" ]]; then
+	if [[ -n "$DOTREMINDERS" ]] && [[ -e "$DOTREMINDERS" ]]; then
+         INPUT="$DOTREMINDERS"
+        elif [[ -e "$HOME/.config/remind/reminders" ]]; then
             INPUT="$HOME/.config/remind/reminders"
         elif [[ -e "$HOME/.reminders" ]]; then
             INPUT="$HOME/.reminders"
         else
             printf "Error: no data file found. Provide one as argument or create one at '$HOME/.config/remind/reminders' or '$HOME/.reminders'. Those can also be directories containing multiple data files, in which case remint will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
-            read -rsn1 && exit 1
+            read -rsn1 && tput cnorm && exit 1
         fi
 	if [[ -d "$INPUT" && ! -f "$INPUT/100-remint.rem" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
@@ -456,14 +459,31 @@ case "$1" in
 	elif [[ -f "$INPUT" ]]; then
             FILE="$INPUT"
 	fi
-        ui ;;
+	ui ;;
     
     "h" | "help" | "-h" | "--h" | "-help" | "--help")
         help && exit 0 ;;
 
     *)
-        if [[ -f "${1-}" ]]; then
-            INPUT="${1}"
+        if [[ -f "$1" ]]; then
+            INPUT="$1"
+            FILE="$INPUT"
+	elif [[ -d "$1" && ! -f "$1/100-remint.rem" ]]; then
+            INPUT="$1"
+            FILE="$INPUT/$DEFAULTFILE"
+            printf ";; Events\n\n" > "$FILE"
+#            for f in "$INPUT"/*; do
+#            	[[ "$f" != "$FILE" && "$f" != *"_backup_"* && \
+#            		"$f" != *".rem" && "$f" != *".purged" ]] && \
+#                	printf ";; INCLUDE $f\n" >> $FILE
+#            done
+            page && tput cup $((LINES-2)) 22
+            printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
+            sleep 3
+	elif [[ -d "$1" && -f "$1/100-remint.rem" ]]; then
+                INPUT="$1/$DEFAULTFILE"
+                FILE="$INPUT/$DEFAULTFILE"
+                echo $FILE
         else
             printf "Error: invalid data file. Press any key to quit."
             read -rsn1 && exit 1

@@ -28,7 +28,7 @@ NAVIGATION
   , p  Previous page       t  Today
   . n  Next page           g  Go to
   h/l  -1/+1 day           q  Quit
-  k/j  -1/+1 wee       other  Quit with prompt
+  k/j  -1/+1 week      other  Quit with prompt
   M/m  -1/+1 month
   Y/y  -1/+1 year
 
