@@ -28,7 +28,6 @@
 
 # Initialization
 sleep 0.05 # Give the terminal some time to spawn if not already opened
-tput civis
 REF=$(date "+%Y-%m-%d")
 
 # Variables values below can be toggled from the TUI, those are default values
@@ -103,6 +102,7 @@ $indent © 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 
 page() {
     checkgeom
+    tput civis
     unset REPLY
     if [[ "$COLORINVERTED" = "yes" ]]; then
         printf '\e[?5h'
@@ -453,7 +453,7 @@ case "$1" in
             INPUT="$HOME/.reminders"
         else
             printf "Error: no data file found. Provide one as argument or create one at '$HOME/.config/remind/reminders' or '$HOME/.reminders'. Those can also be directories containing multiple data files, in which case remint will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
-            read -rsn1 && tput cnorm && exit 1
+            read -rsn1 && exit 1
         fi
 	if [[ -d "$INPUT" && ! -f "$INPUT/100-remint.rem" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
