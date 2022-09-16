@@ -493,7 +493,7 @@ case "$1" in
             printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
             sleep 3
 	elif [[ -d "$1" && -f "$1/100-remint.rem" ]]; then
-                INPUT="$1/$DEFAULTFILE"
+                INPUT="$1"
                 FILE="$INPUT/$DEFAULTFILE"
                 echo $FILE
         else
