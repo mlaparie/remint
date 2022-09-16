@@ -31,11 +31,6 @@ sleep 0.05 # Give the terminal some time to spawn if not already opened
 tput civis
 REF=$(date "+%Y-%m-%d")
 
-# If not already set in your environment, set your preferred EDITOR at the end
-# of the line below, and adjust line 249 to programmatically insert selected
-# date in the data file when adding an event
-[[ ! -v EDITOR ]] || EDITOR=""
-
 # Variables values below can be toggled from the TUI, those are default values
 # The script has not been tested extensively with different defaults
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
@@ -244,60 +239,75 @@ ui() {
             "A" | "a")
                 if [[ "$COLORINVERTED" = "yes" ]]; then
                     invertcolors
-            	COLORINVERTED="yes"
+                    COLORINVERTED="yes"
                 fi
-                if ! [[ "$EDITOR" = "" ]]; then
-                    $EDITOR +2 "$FILE" # Adjust to insert $REF programmatically
+                if [[ -v EDITOR ]]; then
+                    case "$EDITOR" in
+                        "kak")
+                            kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
+                            ;;
+                        "emacs")
+                            emacs -nw +2 "$FILE" # How to insert $REF programmatically?
+                            ;;
+                        "vim")
+                            vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
+                            ;;
+                        "vi")
+                            vi +2 "$FILE" # How to insert $REF programmatically?
+                            ;;
+                        "nano")
+                            nano +2 "$FILE" # How to insert $REF programmatically?
+                            ;;
+                        *)
+                            $EDITOR "$FILE"
+                            ;;
+                    esac
+                elif type kak &> /dev/null; then
+                    kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
+                elif
+                    type emacs &> /dev/null; then
+                    emacs -nw +2 "$FILE" # How to insert $REF programmatically?
+                elif
+                    type vim &> /dev/null; then
+                    vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
+                elif
+                    type vi &> /dev/null; then
+                    vi +2 "$FILE" # How to insert $REF programmatically?
                 else
-                    if type kak &> /dev/null; then
-                        kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
-                    elif
-                        type emacs &> /dev/null; then
-                        emacs -nw +2 "$FILE" # How to insert $REF programmatically?
-                    elif
-                        type vim &> /dev/null; then
-                        vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
-                    elif
-                        type vi &> /dev/null; then
-                        vi +2 "$FILE" # How to insert $REF programmatically?
-                    else
-                        type nano &> /dev/null
-                        nano +2 "$FILE" # How to insert $REF programmatically?
-                    fi
-        	    fi
+                    type nano &> /dev/null
+                    nano +2 "$FILE" # How to insert $REF programmatically?
+                fi
                 if [[ "$COLORINVERTED" = "yes" ]]; then
                     invertcolors
-            	COLORINVERTED="yes"
+                    COLORINVERTED="yes"
                 fi
-                ui ;;
+                continue ;;
             
             "E" | "e")
                 if [[ "$COLORINVERTED" = "yes" ]]; then
                     invertcolors
-            	COLORINVERTED="yes"
+                    COLORINVERTED="yes"
                 fi
-                if ! [[ "$EDITOR" = "" ]]; then
+                if [[ -v EDITOR ]]; then
                     $EDITOR "$FILE"
-                else
-                    if type kak &> /dev/null; then
+                elif type kak &> /dev/null; then
                         kak "$FILE"
-                    elif
-                        type emacs &> /dev/null; then
-                        emacs -nw "$FILE"
-                    elif
-                        type vim &> /dev/null; then
-                        vim "$FILE"
-                    elif
-                        type vi &> /dev/null; then
-                        vi "$FILE"
-                    else
-                        type nano &> /dev/null
-                        nano "$FILE"
-                    fi
-        	    fi
+                elif
+                    type emacs &> /dev/null; then
+                    emacs -nw "$FILE"
+                elif
+                    type vim &> /dev/null; then
+                    vim "$FILE"
+                elif
+                    type vi &> /dev/null; then
+                    vi "$FILE"
+                else
+                    type nano &> /dev/null
+                    nano "$FILE"
+                fi
                 if [[ "$COLORINVERTED" = "yes" ]]; then
                     invertcolors
-            	COLORINVERTED="yes"
+                    COLORINVERTED="yes"
                 fi
                 continue ;;
             
