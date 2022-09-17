@@ -27,7 +27,6 @@ Make sure Dianne Skoll's `remind` is intalled and that `remint.sh` is executable
 ## Options
 `remint` comes with defaults that can be edited at the beginning of the script:
 ```
-# Variables below can be toggled from the TUI, those are the default values
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
 			     # default data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
@@ -55,11 +54,11 @@ NAVIGATION
   Y/y  -1/+1 year
 
 VIEW
-    v  Toggle calendar/list view
-  w s  Toggle week/month mode
-  -/+  -1/+1 week shown in week mode
-  [/]  -1/+1 month shown in month mode
-    m  Toggle Monday/Sunday as first day of the week
+    v  Toggle calendar/list views
+  w s  Toggle week/month span modes
+  [/]  Span -1/+1 week or month per page in current mode
+  r 0  Reset page span for current mode
+    z  Toggle Monday/Sunday as first day of the week
   : x  Toggle 24h format
     d  Toggle day of the year and week number
     o  Show simple year calendar overview

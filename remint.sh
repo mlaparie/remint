@@ -26,10 +26,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Initialization
-sleep 0.05 # Give the terminal some time to spawn if not already opened
-REF=$(date "+%Y-%m-%d")
-
 # Variables below can be toggled from the TUI, those are the default values
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
 			     # default data path is a directory
@@ -45,6 +41,12 @@ PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
 SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
 		    # else SPACING=",n,m" where n and m are numbers
 MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays
+
+# Initialization
+sleep 0.05 # Give the terminal some time to spawn if not already opened
+REF=$(date "+%Y-%m-%d")
+WSPAN=$WEEKSPAN
+MSPAN=$MONTHSPAN
 
 # Functions
 statichelp() {
@@ -70,11 +72,11 @@ $indent   \033[7m M/m \033[0m  -1/+1 month
 $indent   \033[7m Y/y \033[0m  -1/+1 year
 
 $indent VIEW
-$indent   \033[7m   v \033[0m  Toggle calendar/list view
-$indent   \033[7m w s \033[0m  Toggle week/month mode
-$indent   \033[7m -/+ \033[0m  -1/+1 week shown in week mode
-$indent   \033[7m [/] \033[0m  -1/+1 month shown in month mode
-$indent   \033[7m   m \033[0m  Toggle Monday/Sunday as first day of the week
+$indent   \033[7m   v \033[0m  Toggle calendar/list views
+$indent   \033[7m w s \033[0m  Toggle week/month span modes
+$indent   \033[7m [/] \033[0m  Span -1/+1 week or month per page in current mode
+$indent   \033[7m r 0 \033[0m  Reset page span for current mode
+$indent   \033[7m   z \033[0m  Toggle Monday/Sunday as first day of the week
 $indent   \033[7m : x \033[0m  Toggle 24h format
 $indent   \033[7m   d \033[0m  Toggle day of the year and week number
 $indent   \033[7m   o \033[0m  Show simple year calendar overview
@@ -130,29 +132,29 @@ by Remind. I know that frustration."
     
     clear
     if [[ "$VIEW" = "calendar" ]] && [[ "$PREFIX" = "+" ]]; then
-        remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${WEEKSPAN} -b${FORMAT} \
+        remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${WSPAN} -b${FORMAT} \
             -w${COLS}${SPACING} ${INPUT} ${REF}
     elif [[ "$VIEW" = "calendar" ]] && [[ "$PREFIX" = "" ]]; then
-        remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${MONTHSPAN} -b${FORMAT} \
+        remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${MSPAN} -b${FORMAT} \
             -w${COLS}${SPACING} ${INPUT} ${REF}
     elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "+" ]]; then
-        if [[ "$WEEKSPAN" -gt "1" ]]; then
+        if [[ "$WSPAN" -gt "1" ]]; then
             printf "\033[7m Weeks $(date -d $REF '+%W') \
-to $(date -d $REF+$((WEEKSPAN-1))weeks '+%W (%Y)') \033[0m\n\n"
+to $(date -d $REF+$((WSPAN-1))weeks '+%W (%Y)') \033[0m\n\n"
         else
             printf "\033[7m Week $(date -d $REF '+%W (%Y)') \033[0m\n\n"
         fi
-        remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${WEEKSPAN} -b${FORMAT} \
+        remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${WSPAN} -b${FORMAT} \
             ${INPUT} ${REF}
         printf "\n"
     elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "" ]]; then
-        if [[ "$MONTHSPAN" -gt "1" ]]; then
+        if [[ "$MSPAN" -gt "1" ]]; then
             printf "\033[7m $(date -d $REF '+%B %Y') \
-to $(date -d $REF+$((MONTHSPAN-1))months '+%B %Y') \033[0m\n\n"
+to $(date -d $REF+$((MSPAN-1))months '+%B %Y') \033[0m\n\n"
         else
             printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
         fi
-        remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${MONTHSPAN} -b${FORMAT} \
+        remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${MSPAN} -b${FORMAT} \
             ${INPUT} ${REF}
         printf "\n"
     fi
@@ -173,17 +175,17 @@ ui() {
         case $REPLY in
             "P" | "p" | ",")
                 if [[ "$PREFIX" = "+" ]]; then
-                    REF=$(date -d "$REF-$WEEKSPAN weeks" "+%Y-%m-%d")
+                    REF=$(date -d "$REF-$WSPAN weeks" "+%Y-%m-%d")
                 else
-                    REF=$(date -d "$REF-$MONTHSPAN months" "+%Y-%m-%d")
+                    REF=$(date -d "$REF-$MSPAN months" "+%Y-%m-%d")
                 fi
                 continue ;;
                    
             "N" | "n" | ".")
                 if [[ "$PREFIX" = "+" ]]; then
-                    REF=$(date -d "$REF+$WEEKSPAN weeks" "+%Y-%m-%d")
+                    REF=$(date -d "$REF+$WSPAN weeks" "+%Y-%m-%d")
                 else
-                    REF=$(date -d "$REF+$MONTHSPAN months" "+%Y-%m-%d")
+                    REF=$(date -d "$REF+$MSPAN months" "+%Y-%m-%d")
                 fi
                 continue ;;
             
@@ -265,34 +267,42 @@ ui() {
                 fi
                 continue ;;
             
-            "-")
-                ((WEEKSPAN--))
-                if [[ "$WEEKSPAN" -lt "1" ]]; then
-                    WEEKSPAN=1
+            "-" | "[")
+                if [[ "$PREFIX" = "+" ]]; then
+                    ((WSPAN--))
+                    if [[ "$WSPAN" -lt "1" ]]; then
+                        WSPAN=1
+                    fi
+                elif [[ "$PREFIX" = "" ]]; then
+                    ((MSPAN--))
+                    if [[ "$MSPAN" -lt "1" ]]; then
+                        MSPAN=1
+                    fi
                 fi
                 continue ;;
 
-            "+" | "=")
-                ((WEEKSPAN++))
-                if [[ "$WEEKSPAN" -gt "52" ]]; then
-                    WEEKSPAN=52
-                fi
-                continue ;;
-            
-            "[")
-                ((MONTHSPAN--))
-                if [[ "$MONTHSPAN" -lt "1" ]]; then
-                    MONTHSPAN=1
+            "+" | "=" | "]")
+                if [[ "$PREFIX" = "+" ]]; then
+                    ((WSPAN++))
+                    if [[ "$WSPAN" -gt "52" ]]; then
+                        WSPAN=52
+                    fi
+                elif [[ "$PREFIX" = "" ]]; then
+                    ((MSPAN++))
+                    if [[ "$MSPAN" -gt "12" ]]; then
+                        MSPAN=12
+                    fi
                 fi
                 continue ;;
 
-            "]")
-                ((MONTHSPAN++))
-                if [[ "$MONTHSPAN" -gt "12" ]]; then
-                    MONTHSPAN=12
+            "0" | "R" | "r")
+                if [[ "$PREFIX" = "+" ]]; then
+                    WSPAN=$WEEKSPAN
+                elif [[ "$PREFIX" = "" ]]; then
+                    MSPAN=$MONTHSPAN
                 fi
                 continue ;;
-            
+           
             "F" | "f")
                 if [[ "$SPACING" = ",0,0" ]]; then
                     SPACING=""
