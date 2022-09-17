@@ -39,12 +39,11 @@ FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm
 VIEW="calendar"     # Or VIEW="list"
 COLORINVERTED="no"  # Or COLORINVERTED="yes" to default to light or dark window
 SHOWDOY="yes"       # SHOWDOY="no" to hide dat of year by default
-SPAN="4"            # Number of weeks or months to show by default
-PREFIX="+"          # If PREFIX="+", then SPAN is expressed in weeks,
-		    # else if PREFIX="", SPAN is expresed in months
-UNIT="weeks"        # Tied to PREFIX: use UNIT="weeks" if PREFIX="+",
-		    # else UNIT="month"
-SPACING=""          # SPACING="" for fixed cell spacing,
+WEEKSPAN="4"        # Number of weeks to show by default in week view
+MONTHSPAN="1"       # Number of months to show by default in month view
+PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
+                    # else if PREFIX="", then the default view shows months
+SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
 		    # else SPACING=",n,m" where n and m are numbers
 
 # Functions
@@ -121,16 +120,19 @@ page() {
     fi
     
     clear
-    if [[ "$VIEW" = "calendar" ]]; then
-        remind $COLOR -mcu$PREFIX$SPAN -b$FORMAT -w"$COLS""$SPACING" \
+    if [[ "$VIEW" = "calendar" ]] && [[ "$PREFIX" = "+" ]]; then
+        remind $COLOR -mcu$PREFIX$WEEKSPAN -b$FORMAT -w"$COLS""$SPACING" \
             "$INPUT" $REF
-    else
-        if [[ "$UNIT" = "weeks" ]]; then
-            printf "\033[7m Weeks $(date -d $REF '+%W') to $(date -d $REF+3weeks '+%W (%Y)') \033[0m\n\n"
-        else
-            printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
-        fi
-        remind $COLOR -ms$PREFIX$SPAN -b$FORMAT "$INPUT" $REF
+    elif [[ "$VIEW" = "calendar" ]] && [[ "$PREFIX" = "" ]]; then
+        remind $COLOR -mcu$PREFIX$MONTHSPAN -b$FORMAT -w"$COLS""$SPACING" \
+            "$INPUT" $REF
+    elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "+" ]]; then
+        printf "\033[7m Weeks $(date -d $REF '+%W') to $(date -d $REF+3weeks '+%W (%Y)') \033[0m\n\n"
+        remind $COLOR -ms$PREFIX$WEEKSPAN -b$FORMAT "$INPUT" $REF
+        printf "\n"
+    elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "" ]]; then
+        printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
+        remind $COLOR -ms$PREFIX$MONTHSPAN -b$FORMAT "$INPUT" $REF
         printf "\n"
     fi
     
@@ -149,10 +151,20 @@ ui() {
         read -rsn1
         case $REPLY in
             "P" | "p" | ",")
-                REF=$(date -d "$REF-$SPAN $UNIT" "+%Y-%m-%d") && continue ;;
-            
+                if [[ "$PREFIX" = "+" ]]; then
+                    REF=$(date -d "$REF-$WEEKSPAN weeks" "+%Y-%m-%d")
+                else
+                    REF=$(date -d "$REF-$MONTHSPAN months" "+%Y-%m-%d")
+                fi
+                continue ;;
+                   
             "N" | "n" | ".")
-                REF=$(date -d "$REF+$SPAN $UNIT" "+%Y-%m-%d") && continue ;;
+                if [[ "$PREFIX" = "+" ]]; then
+                    REF=$(date -d "$REF+$WEEKSPAN weeks" "+%Y-%m-%d")
+                else
+                    REF=$(date -d "$REF+$MONTHSPAN months" "+%Y-%m-%d")
+                fi
+                continue ;;
             
             "Y")
                 REF=$(date -d "$REF-1 year" "+%Y-%m-%d") && continue ;;
@@ -215,15 +227,11 @@ ui() {
                 continue ;;
             
             "W" | "w" | "S" | "s")
-                if [[ "$SPAN" -eq "4" ]]; then 
+                if [[ "$PREFIX" = "+" ]]; then 
                     PREFIX=""
-                    SPAN="1"
-                    UNIT="month"
                     SPACING=",0,0"
                 else
                     PREFIX="+"
-                    SPAN="4"
-                    UNIT="weeks"
                     SPACING=""
                 fi
                 continue ;;
