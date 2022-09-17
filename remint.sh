@@ -30,27 +30,26 @@
 sleep 0.05 # Give the terminal some time to spawn if not already opened
 REF=$(date "+%Y-%m-%d")
 
-# Variables values below can be toggled from the TUI, those are default values
-# The script has not been tested extensively with different defaults
+# Variables below can be toggled from the TUI, those are the default values
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
 			     # default data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
 FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm
-VIEW="calendar"     # Or VIEW="list" to display the agenda by default
-COLORINVERTED="no"  # Or COLORINVERTED="yes" to toggle light/dark default mode
-SHOWDOY="yes"       # SHOWDOY="no" to hide dat of year by default
+VIEW="calendar"     # VIEW="list" to display the agenda by default
+COLORINVERTED="no"  # COLORINVERTED="yes" to toggle light/dark default mode
+SHOWDOYWOY="yes"    # SHOWDOYWOY="no" to hide day of year and week number
 WEEKSPAN="4"        # Number of weeks to show by default in week view
 MONTHSPAN="1"       # Number of months to show by default in month view
 PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
                     # else if PREFIX="", then the default view shows months
 SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
 		    # else SPACING=",n,m" where n and m are numbers
-MONDAYFIRST="m"     # Or MONDAYFIRST="" to start weeks on Sundays
+MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays
 
 # Functions
 help() {
     clear
-    tput cup $((((LINES/2))-18))
+    tput cup $((((LINES/2))-19))
     printf "
 $indent                                             88                ,d
 $indent                                             °°                88     
@@ -62,7 +61,6 @@ $indent 88           '°Ybbd8°°  88      88      88  88  88       88   °Y888
 
 $indent A simple terminal UI wrapper for D. Skoll's Remind calendar program
 
-
 $indent NAVIGATION
 $indent   \033[7m , p \033[0m  Previous page   \033[7m     t \033[0m  Today
 $indent   \033[7m . n \033[0m  Next page       \033[7m     g \033[0m  Go to
@@ -72,15 +70,17 @@ $indent   \033[7m M/m \033[0m  -1/+1 month
 $indent   \033[7m Y/y \033[0m  -1/+1 year
 
 $indent VIEW
-$indent   \033[7m w s \033[0m  Toggle page span (4 weeks vs. full month)
-$indent   \033[7m   v \033[0m  Toggle view (calendar vs. list)
-$indent   \033[7m   f \033[0m  Toggle cell spacing (fixed vs. collapsed)
-$indent   \033[7m   i \033[0m  Invert colors
-$indent   \033[7m   c \033[0m  Toggle Remind colors
-$indent   \033[7m : x \033[0m  Toggle 24h format
+$indent   \033[7m   v \033[0m  Toggle calendar/list view
+$indent   \033[7m w s \033[0m  Toggle week/month mode
+$indent   \033[7m -/+ \033[0m  -1/+1 week shown in week mode
+$indent   \033[7m [/] \033[0m  -1/+1 month shown in month mode
 $indent   \033[7m   m \033[0m  Toggle Monday/Sunday as first day of the week
-$indent   \033[7m   d \033[0m  Toggle day of the year
-$indent   \033[7m   o \033[0m  Show simple year overview
+$indent   \033[7m : x \033[0m  Toggle 24h format
+$indent   \033[7m   d \033[0m  Toggle day of the year and week number
+$indent   \033[7m   o \033[0m  Show simple year calendar overview
+$indent   \033[7m   f \033[0m  Toggle fixed/collapsed cell spacing
+$indent   \033[7m   i \033[0m  Invert terminal background and foreground colors
+$indent   \033[7m   c \033[0m  Toggle Remind colors
 $indent   \033[7m   ? \033[0m  Show this help
 
 $indent DATA
@@ -110,13 +110,15 @@ page() {
     fi
 
     if [[ "${REF:0:4}" -lt "1990" ]]; then
-        tput cup $((LINES-2)) 22
-        printf "\033[7m !! \033[0m Error: years before 1990 are not supported by Remind."
+        tput cup $((LINES-2)) 28
+        printf "\033[7m !! \033[0m Error: years before 1990 are not supported \
+by Remind."
         REF="1990-01-01"
         read -rsn1
     elif  [[ "${REF:0:4}" -gt "5990" ]]; then
-        tput cup $((LINES-2)) 22
-        printf "\033[7m !! \033[0m Error: years ofter 5990 are not supported by Remind. I know that frustration."
+        tput cup $((LINES-2)) 28
+        printf "\033[7m !! \033[0m Error: years ofter 5990 are not supported \
+by Remind. I know that frustration."
         REF="5990-12-31"
         read -rsn1
     fi
@@ -129,20 +131,30 @@ page() {
         remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${MONTHSPAN} -b${FORMAT} \
             -w${COLS}${SPACING} ${INPUT} ${REF}
     elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "+" ]]; then
-        printf "\033[7m Weeks $(date -d $REF '+%W') to $(date -d $REF+3weeks '+%W (%Y)') \033[0m\n\n"
+        if [[ "$WEEKSPAN" -gt "1" ]]; then
+            printf "\033[7m Weeks $(date -d $REF '+%W') \
+to $(date -d $REF+$((WEEKSPAN-1))weeks '+%W (%Y)') \033[0m\n\n"
+        else
+            printf "\033[7m Week $(date -d $REF '+%W (%Y)') \033[0m\n\n"
+        fi
         remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${WEEKSPAN} -b${FORMAT} \
             ${INPUT} ${REF}
         printf "\n"
     elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "" ]]; then
-        printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
+        if [[ "$MONTHSPAN" -gt "1" ]]; then
+            printf "\033[7m $(date -d $REF '+%B %Y') \
+to $(date -d $REF+$((MONTHSPAN-1))months '+%B %Y') \033[0m\n\n"
+        else
+            printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
+        fi
         remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${MONTHSPAN} -b${FORMAT} \
             ${INPUT} ${REF}
         printf "\n"
     fi
     
         tput cup $((LINES-2))
-        if [[ "$SHOWDOY" = "yes" ]]; then
-            DOY="($(date -d "$REF" "+%j"))"
+        if [[ "$SHOWDOYWOY" = "yes" ]]; then
+            DOY="($(date -d "$REF" "+D%j, W%U"))"
             printf "\033[7m > \033[0m %s $DOY \n ?  Help" "$REF"
         else
             printf "\033[7m > \033[0m %s \n ?  Help" "$REF"
@@ -223,10 +235,10 @@ ui() {
             
             "D" | "d")
                 clear
-                if [[ "$SHOWDOY" = "yes" ]]; then
-                    SHOWDOY="no"
+                if [[ "$SHOWDOYWOY" = "yes" ]]; then
+                    SHOWDOYWOY="no"
                 else
-                    SHOWDOY="yes"
+                    SHOWDOYWOY="yes"
                 fi
                 continue ;;
             
@@ -248,14 +260,42 @@ ui() {
                 fi
                 continue ;;
             
+            "-")
+                ((WEEKSPAN--))
+                if [[ "$WEEKSPAN" -lt "1" ]]; then
+                    WEEKSPAN=1
+                fi
+                continue ;;
+
+            "+" | "=")
+                ((WEEKSPAN++))
+                if [[ "$WEEKSPAN" -gt "52" ]]; then
+                    WEEKSPAN=52
+                fi
+                continue ;;
+            
+            "[")
+                ((MONTHSPAN--))
+                if [[ "$MONTHSPAN" -lt "1" ]]; then
+                    MONTHSPAN=1
+                fi
+                continue ;;
+
+            "]")
+                ((MONTHSPAN++))
+                if [[ "$MONTHSPAN" -gt "12" ]]; then
+                    MONTHSPAN=12
+                fi
+                continue ;;
+            
             "F" | "f")
                 if [[ "$SPACING" = ",0,0" ]]; then
                     SPACING=""
                 else
                     SPACING=",0,0"
                 fi
-                ui ;;
-            
+                continue ;;
+
             "A" | "a")
                 if [[ "$COLORINVERTED" = "yes" ]]; then
                     invertcolors
@@ -333,7 +373,7 @@ ui() {
             
             "B" | "b")
                 cp "$FILE" "$FILE"_backup_"$(date +'%Y%m%d_%H%M')" || err=1
-                tput cup $((LINES-2)) 22
+                tput cup $((LINES-2)) 28
                 if [[ "$err" -eq "1" ]]; then
                     printf "\033[7m >_ \033[0m Failed to back up data."
                 else
@@ -360,7 +400,7 @@ ui() {
                 tput cnorm && exit 0 ;;
 
             *)
-                tput cup $((LINES-2)) 22
+                tput cup $((LINES-2)) 28
                 printf "\033[7m >_ \033[0m Quit? [Y/n]"
                 read -rsn1
                 case $REPLY in
@@ -416,10 +456,10 @@ overview() {
 }
 
 goto() {
-    tput cup $((LINES-2)) 22
+    tput cup $((LINES-2)) 28
     printf "\033[7m >_ \033[0m Go to year or date: "
     read -r
-    tput cup $((LINES-2)) 22
+    tput cup $((LINES-2)) 28
     if [[ "$REPLY" = "" ]]; then
         REF=$(date "+%Y-%m-%d")
     elif ! [[ "${REPLY:0:4}" =~ ^-?[0-9]+$ ]]; then
@@ -431,7 +471,8 @@ goto() {
         TMP="${REF:6:10}"
         REF=$(date -d "$(date "+$REPLY-$TMP")" "+%Y-%m-%d")
     elif [[ "${REPLY:0:4}" -lt "1990" || "${REPLY:0:4}" -gt "5990" ]]; then
-        printf "\033[7m !! \033[0m Go to year or date: Remind only supports years within [1990-5990]. We have 4000 years to make history."
+        printf "\033[7m !! \033[0m Go to year or date: Remind only supports \
+years within [1990-5990]. We have 4000 years to make history."
         read -rsn1
     elif ! date -d "$REPLY" > /dev/null 2>&1; then
         printf "\033[7m !! \033[0m Go to year or date: invalid date."
@@ -479,7 +520,10 @@ case "$1" in
         elif [[ -e "$HOME/.reminders" ]]; then
             INPUT="$HOME/.reminders"
         else
-            printf "Error: no data file found. Provide one as argument or create one at '$HOME/.config/remind/reminders' or '$HOME/.reminders'. Those can also be directories containing multiple data files, in which case remint will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
+            printf "Error: no data file found. Provide one as argument or \
+create one at '$HOME/.config/remind/reminders' or '$HOME/.reminders'. Those \
+can also be directories containing multiple data files, in which case remint \
+will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             read -rsn1 && exit 1
         fi
 	if [[ -d "$INPUT" && ! -f "$INPUT/100-remint.rem" ]]; then
@@ -490,7 +534,7 @@ case "$1" in
 #            		"$f" != *".rem" && "$f" != *".purged" ]] && \
 #                	printf ";; INCLUDE $f\n" >> $FILE
 #            done
-            page && tput cup $((LINES-2)) 22
+            page && tput cup $((LINES-2)) 28
             printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
             sleep 3
 	elif [[ -d "$INPUT" && -f "$INPUT/100-remint.rem" ]]; then
@@ -516,7 +560,7 @@ case "$1" in
 #            		"$f" != *".rem" && "$f" != *".purged" ]] && \
 #                	printf ";; INCLUDE $f\n" >> $FILE
 #            done
-            page && tput cup $((LINES-2)) 22
+            page && tput cup $((LINES-2)) 28
             printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
             sleep 3
 	elif [[ -d "$1" && -f "$1/100-remint.rem" ]]; then
