@@ -316,7 +316,7 @@ ui() {
                     invertcolors
                     COLORINVERTED="yes"
                 fi
-                if [[ -v EDITOR ]]; then
+                if [[ -n "$EDITOR" ]]; then
                     case "$EDITOR" in
                         "kak")
                             kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
@@ -363,7 +363,7 @@ ui() {
                     invertcolors
                     COLORINVERTED="yes"
                 fi
-                if [[ -v EDITOR ]]; then
+                if [[ -n "$EDITOR" ]]; then
                     $EDITOR "$FILE"
                 elif type kak &> /dev/null; then
                         kak "$FILE"
