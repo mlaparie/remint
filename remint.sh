@@ -47,7 +47,7 @@ SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
 MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays
 
 # Functions
-help() {
+statichelp() {
     clear
     tput cup $((((LINES/2))-19))
     printf "
@@ -90,15 +90,20 @@ $indent   \033[7m   b \033[0m  Back up data
 
 $indent © 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 "
-    read -rsn1
-    case $REPLY in
-        "I" | "i")
-            invertcolors
-            help
-            read -rsn1 ;;
-        *)
-            ui ;;
-    esac
+}
+
+showhelp() {
+    while true ; do
+        statichelp
+        read -rsn1
+            case $REPLY in
+                "I" | "i")
+                    invertcolors
+                    continue ;;
+                *)
+                    return ;;
+            esac
+    done
 }
 
 page() {
@@ -386,15 +391,15 @@ ui() {
                 continue ;;
             
             "O" | "o")
-    	    overview ;;
+                overview ;;
             
             "I" | "i")
-    	    invertcolors
-    	    continue ;;
+                invertcolors
+                continue ;;
     	    
             "?")
                 checkgeom
-                help ;;
+                showhelp ;;
 
             "Q" | "q")
                 tput cnorm && exit 0 ;;
@@ -414,7 +419,7 @@ ui() {
                         ;;
 
                     *)
-    		    continue ;;
+                        continue ;;
     		    
                 esac
                 ;;
@@ -483,7 +488,6 @@ years within [1990-5990]. We have 4000 years to make history."
     else
         REF=$(date -d "$REPLY" "+%Y-%m-%d")
     fi
-    DOY="($(date -d "$REF" "+%j"))"
 }
 
 invertcolors() {
@@ -545,7 +549,8 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 	ui ;;
     
     "h" | "help" | "-h" | "--h" | "-help" | "--help")
-        help && exit 0 ;;
+        statichelp
+        exit 0 ;;
 
     *)
         if [[ -f "$1" ]]; then
