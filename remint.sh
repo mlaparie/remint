@@ -36,8 +36,8 @@ DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
 			     # default data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
 FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm
-VIEW="calendar"     # Or VIEW="list"
-COLORINVERTED="no"  # Or COLORINVERTED="yes" to default to light or dark window
+VIEW="calendar"     # Or VIEW="list" to display the agenda by default
+COLORINVERTED="no"  # Or COLORINVERTED="yes" to toggle light/dark default mode
 SHOWDOY="yes"       # SHOWDOY="no" to hide dat of year by default
 WEEKSPAN="4"        # Number of weeks to show by default in week view
 MONTHSPAN="1"       # Number of months to show by default in month view
@@ -45,11 +45,12 @@ PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
                     # else if PREFIX="", then the default view shows months
 SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
 		    # else SPACING=",n,m" where n and m are numbers
+MONDAYFIRST="m"     # Or MONDAYFIRST="" to start weeks on Sundays
 
 # Functions
 help() {
     clear
-    tput cup $((((LINES/2))-19))
+    tput cup $((((LINES/2))-18))
     printf "
 $indent                                             88                ,d
 $indent                                             °°                88     
@@ -77,6 +78,7 @@ $indent   \033[7m   f \033[0m  Toggle cell spacing (fixed vs. collapsed)
 $indent   \033[7m   i \033[0m  Invert colors
 $indent   \033[7m   c \033[0m  Toggle Remind colors
 $indent   \033[7m : x \033[0m  Toggle 24h format
+$indent   \033[7m   m \033[0m  Toggle Monday/Sunday as first day of the week
 $indent   \033[7m   d \033[0m  Toggle day of the year
 $indent   \033[7m   o \033[0m  Show simple year overview
 $indent   \033[7m   ? \033[0m  Show this help
@@ -121,18 +123,20 @@ page() {
     
     clear
     if [[ "$VIEW" = "calendar" ]] && [[ "$PREFIX" = "+" ]]; then
-        remind $COLOR -mcu$PREFIX$WEEKSPAN -b$FORMAT -w"$COLS""$SPACING" \
-            "$INPUT" $REF
+        remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${WEEKSPAN} -b${FORMAT} \
+            -w${COLS}${SPACING} ${INPUT} ${REF}
     elif [[ "$VIEW" = "calendar" ]] && [[ "$PREFIX" = "" ]]; then
-        remind $COLOR -mcu$PREFIX$MONTHSPAN -b$FORMAT -w"$COLS""$SPACING" \
-            "$INPUT" $REF
+        remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${MONTHSPAN} -b${FORMAT} \
+            -w${COLS}${SPACING} ${INPUT} ${REF}
     elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "+" ]]; then
         printf "\033[7m Weeks $(date -d $REF '+%W') to $(date -d $REF+3weeks '+%W (%Y)') \033[0m\n\n"
-        remind $COLOR -ms$PREFIX$WEEKSPAN -b$FORMAT "$INPUT" $REF
+        remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${WEEKSPAN} -b${FORMAT} \
+            ${INPUT} ${REF}
         printf "\n"
     elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "" ]]; then
         printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
-        remind $COLOR -ms$PREFIX$MONTHSPAN -b$FORMAT "$INPUT" $REF
+        remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${MONTHSPAN} -b${FORMAT} \
+            ${INPUT} ${REF}
         printf "\n"
     fi
     
@@ -206,6 +210,14 @@ ui() {
                     FORMAT=0
                 else
                     FORMAT=1
+                fi
+                continue ;;
+            
+            "Z" | "z")
+                if [[ "$MONDAYFIRST" = "m" ]]; then
+                    MONDAYFIRST=""
+                else
+                    MONDAYFIRST="m"
                 fi
                 continue ;;
             
@@ -373,23 +385,30 @@ ui() {
 
 overview() {
     clear
-    cal -wmy "${REF:0:4}" | center
+    cal -${MONDAYFIRST:-s}wy "${REF:0:4}" | center
     read -rsn1
     case $REPLY in
         "," | "Y" | "P" | "p")
-            clear && cal -wmy "$((${REF:0:4}-1))" | center
+            clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}-1))" | center
             REF=$(date -d "$REF-1 year" "+%Y-%m-%d")
             overview ;;
         "." | "y" | "N" | "n")
-            clear && cal -wmy "$((${REF:0:4}+1))" | center
-            REF=$(date -d "$REF++1 year" "+%Y-%m-%d")
+            clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}+1))" | center
+            REF=$(date -d "$REF+1 year" "+%Y-%m-%d")
             overview ;;
         "/" | "G" | "g")
-            clear && cal -wmy "$((${REF:0:4}+1))" | center
+            clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}+1))" | center
             goto
             overview ;;
         "I" | "i")
             invertcolors
+            overview ;;
+        "Z" | "z")
+            if [[ "$MONDAYFIRST" = "m" ]]; then
+                MONDAYFIRST=""
+            else
+                MONDAYFIRST="m"
+            fi
             overview ;;
         *)
             return ;;
