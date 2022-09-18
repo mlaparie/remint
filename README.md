@@ -28,7 +28,7 @@ Make sure Dianne Skoll's `remind` is intalled and that `remint.sh` is executable
 `remint` comes with defaults that can be edited at the beginning of the script:
 ```
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
-			     # default data path is a directory
+			     # data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
 FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm
 VIEW="calendar"     # VIEW="list" to display the agenda by default
@@ -41,6 +41,10 @@ PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
 SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
 		    # else SPACING=",n,m" where n and m are numbers
 MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays
+REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
+		    # search patterns or scroll long outputs. Beware that not
+		    # all pagers can handle Remind's color and escape colors
+		    # correctly; "less -Ri" can
 ```
 
 ## Help
@@ -48,16 +52,16 @@ MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays
 NAVIGATION
   , p  Previous page       t  Today
   . n  Next page           g  Go to
-  h/l  -1/+1 day           q  Quit
-  k/j  -1/+1 week      other  Quit with prompt
+  h/l  -1/+1 day           /  Pipe to pager (e.g. to search)
+  k/j  -1/+1 week          q  Quit
   M/m  -1/+1 month
   Y/y  -1/+1 year
 
 VIEW
     v  Toggle calendar/list views
   w s  Toggle week/month span modes
-  [/]  Span -1/+1 week or month per page in current mode
-  r 0  Reset page span for current mode
+  [/]  Span -1/+1 week or month per page of current mode
+  r 0  Reset default page span of current mode
     z  Toggle Monday/Sunday as first day of the week
   : x  Toggle 24h format
     d  Toggle day of the year and week number

@@ -28,7 +28,7 @@
 
 # Variables below can be toggled from the TUI, those are the default values
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
-			     # default data path is a directory
+			     # data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
 FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm
 VIEW="calendar"     # VIEW="list" to display the agenda by default
@@ -41,6 +41,10 @@ PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
 SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
 		    # else SPACING=",n,m" where n and m are numbers
 MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays
+REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
+		    # search patterns or scroll long outputs. Beware that not
+		    # all pagers can handle Remind's color and escape colors
+		    # correctly; "less -Ri" can
 
 # Initialization
 sleep 0.05 # Give the terminal some time to spawn if not already opened
@@ -66,16 +70,16 @@ $indent A simple terminal UI wrapper for D. Skoll's Remind calendar program
 $indent NAVIGATION
 $indent   \033[7m , p \033[0m  Previous page   \033[7m     t \033[0m  Today
 $indent   \033[7m . n \033[0m  Next page       \033[7m     g \033[0m  Go to
-$indent   \033[7m h/l \033[0m  -1/+1 day       \033[7m     q \033[0m  Quit
-$indent   \033[7m k/j \033[0m  -1/+1 week      \033[7m other \033[0m  Quit with prompt
-$indent   \033[7m M/m \033[0m  -1/+1 month
+$indent   \033[7m h/l \033[0m  -1/+1 day       \033[7m     / \033[0m  Pipe to pager (e.g. to search)
+$indent   \033[7m k/j \033[0m  -1/+1 week      \033[7m     q \033[0m  Quit
+$indent   \033[7m M/m \033[0m  -1/+1 month     \033[7m other \033[0m  Quit with prompt
 $indent   \033[7m Y/y \033[0m  -1/+1 year
 
 $indent VIEW
 $indent   \033[7m   v \033[0m  Toggle calendar/list views
 $indent   \033[7m w s \033[0m  Toggle week/month span modes
-$indent   \033[7m [/] \033[0m  Span -1/+1 week or month per page in current mode
-$indent   \033[7m r 0 \033[0m  Reset page span for current mode
+$indent   \033[7m [/] \033[0m  Span -1/+1 week or month per page of current mode
+$indent   \033[7m r 0 \033[0m  Reset default page span of current mode
 $indent   \033[7m   z \033[0m  Toggle Monday/Sunday as first day of the week
 $indent   \033[7m : x \033[0m  Toggle 24h format
 $indent   \033[7m   d \033[0m  Toggle day of the year and week number
@@ -396,10 +400,13 @@ ui() {
                 fi
                 sleep 2 && ui ;;
             
-            "/" | "G" | "g")
+            "G" | "g")
                 goto
                 continue ;;
-            
+
+            "/")
+                page | ${REMPAGER:-less -Ri} ;;
+
             "O" | "o")
                 overview ;;
             
