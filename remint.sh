@@ -446,35 +446,37 @@ ui() {
 }
 
 overview() {
-    clear
-    cal -${MONDAYFIRST:-s}wy "${REF:0:4}" | center
-    read -rsn1
-    case $REPLY in
-        "," | "Y" | "P" | "p")
-            clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}-1))" | center
-            REF=$(date -d "$REF-1 year" "+%Y-%m-%d")
-            overview ;;
-        "." | "y" | "N" | "n")
-            clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}+1))" | center
-            REF=$(date -d "$REF+1 year" "+%Y-%m-%d")
-            overview ;;
-        "/" | "G" | "g")
-            clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}+1))" | center
-            goto
-            overview ;;
-        "I" | "i")
-            invertcolors
-            overview ;;
-        "Z" | "z")
-            if [[ "$MONDAYFIRST" = "m" ]]; then
-                MONDAYFIRST=""
-            else
-                MONDAYFIRST="m"
-            fi
-            overview ;;
-        *)
-            return ;;
-    esac
+    while true ; do
+        clear
+        cal -${MONDAYFIRST:-s}wy "${REF:0:4}" | center
+        read -rsn1
+        case $REPLY in
+            "," | "Y" | "P" | "p")
+                clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}-1))" | center
+                REF=$(date -d "$REF-1 year" "+%Y-%m-%d")
+                continue ;;
+            "." | "y" | "N" | "n")
+                clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}+1))" | center
+                REF=$(date -d "$REF+1 year" "+%Y-%m-%d")
+                continue ;;
+            "/" | "G" | "g")
+                clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}+1))" | center
+                goto
+                continue ;;
+            "I" | "i")
+                invertcolors
+                continue ;;
+            "Z" | "z")
+                if [[ "$MONDAYFIRST" = "m" ]]; then
+                    MONDAYFIRST=""
+                else
+                    MONDAYFIRST="m"
+                fi
+                continue ;;
+            *)
+                return ;;
+        esac
+    done
 }
 
 goto() {
