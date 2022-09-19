@@ -68,11 +68,11 @@ $indent 88           '°Ybbd8°°  88      88      88  88  88       88   °Y888
 $indent A simple terminal UI wrapper for D. Skoll's Remind calendar program
 
 $indent NAVIGATION
-$indent   \033[7m , p \033[0m  Previous page   \033[7m     t \033[0m  Today
-$indent   \033[7m . n \033[0m  Next page       \033[7m     g \033[0m  Go to
-$indent   \033[7m h/l \033[0m  -1/+1 day       \033[7m     / \033[0m  Pipe to pager (e.g. to search)
-$indent   \033[7m k/j \033[0m  -1/+1 week      \033[7m     q \033[0m  Quit
-$indent   \033[7m M/m \033[0m  -1/+1 month     \033[7m other \033[0m  Quit with prompt
+$indent   \033[7m , p \033[0m  Prev page     \033[7m     t \033[0m  Today
+$indent   \033[7m . n \033[0m  Next page     \033[7m     g \033[0m  Go to
+$indent   \033[7m h/l \033[0m  -1/+1 day     \033[7m     o \033[0m  Navigate from year overview
+$indent   \033[7m k/j \033[0m  -1/+1 week    \033[7m     q \033[0m  Quit
+$indent   \033[7m M/m \033[0m  -1/+1 month   \033[7m other \033[0m  Quit with prompt
 $indent   \033[7m Y/y \033[0m  -1/+1 year
 
 $indent VIEW
@@ -83,7 +83,7 @@ $indent   \033[7m r 0 \033[0m  Reset default page span of current mode
 $indent   \033[7m   z \033[0m  Toggle Monday/Sunday as first day of the week
 $indent   \033[7m : x \033[0m  Toggle 24h format
 $indent   \033[7m   d \033[0m  Toggle day of the year and week number
-$indent   \033[7m   o \033[0m  Show simple year calendar overview
+$indent   \033[7m   / \033[0m  Pipe to pager (e.g. to search pattern, press h for help))
 $indent   \033[7m   f \033[0m  Toggle fixed/collapsed cell spacing
 $indent   \033[7m   i \033[0m  Invert terminal background and foreground colors
 $indent   \033[7m   c \033[0m  Toggle Remind colors
@@ -448,19 +448,32 @@ ui() {
 overview() {
     while true ; do
         clear
-        cal -${MONDAYFIRST:-s}wy "${REF:0:4}" | center
+#        tput cup $((((LINES/2))-19)) 38
+        cal -${MONDAYFIRST:-s}wy ${REF} #| center
+#        i=$((((LINES/2))-19))
+#        tput clear; tput cup $i 38; cal -${MONDAYFIRST:-s}wy ${REF} |
+#        while read; do tput cup $((++i)) 38; printf "$REPLY"; done
         read -rsn1
         case $REPLY in
             "," | "Y" | "P" | "p")
-                clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}-1))" | center
-                REF=$(date -d "$REF-1 year" "+%Y-%m-%d")
-                continue ;;
+                REF=$(date -d "$REF-1 year" "+%Y-%m-%d") && continue ;;
             "." | "y" | "N" | "n")
-                clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}+1))" | center
-                REF=$(date -d "$REF+1 year" "+%Y-%m-%d")
-                continue ;;
-            "/" | "G" | "g")
-                clear && cal -${MONDAYFIRST:-s}wy "$((${REF:0:4}+1))" | center
+                REF=$(date -d "$REF+1 year" "+%Y-%m-%d") && continue ;;
+            "M")
+                REF=$(date -d "$REF-1 month" "+%Y-%m-%d") && continue ;;
+            "m")
+                REF=$(date -d "$REF+1 month" "+%Y-%m-%d") && continue ;;
+            "K"| "k")
+                REF=$(date -d "$REF-1 week" "+%Y-%m-%d") && continue ;;
+            "J" | "j")
+                REF=$(date -d "$REF+1 week" "+%Y-%m-%d") && continue ;;
+            "h"| "H")
+                REF=$(date -d "$REF-1 day" "+%Y-%m-%d") && continue ;;
+            "L" | "l")
+                REF=$(date -d "$REF+1 day" "+%Y-%m-%d") && continue ;;
+            "T" | "t")
+                REF=$(date "+%Y-%m-%d") && continue ;;
+            "G" | "g")
                 goto
                 continue ;;
             "I" | "i")

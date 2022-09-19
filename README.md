@@ -50,11 +50,11 @@ REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
 ## Help
 ```
 NAVIGATION
-  , p  Previous page       t  Today
-  . n  Next page           g  Go to
-  h/l  -1/+1 day           /  Pipe to pager (e.g. to search)
-  k/j  -1/+1 week          q  Quit
-  M/m  -1/+1 month
+  , p  Prev page          t  Today
+  . n  Next page          g  Go to
+  h/l  -1/+1 day          o  Navigate from year overview
+  k/j  -1/+1 week         q  Quit
+  M/m  -1/+1 month    other  Quit with prompt
   Y/y  -1/+1 year
 
 VIEW
@@ -65,7 +65,7 @@ VIEW
     z  Toggle Monday/Sunday as first day of the week
   : x  Toggle 24h format
     d  Toggle day of the year and week number
-    o  Show simple year calendar overview
+    /  Pipe to pager (e.g. to search pattern, press h for help))
     f  Toggle fixed/collapsed cell spacing
     i  Invert terminal background and foreground colors
     c  Toggle Remind colors
