@@ -448,16 +448,20 @@ ui() {
 }
 
 overview() {
+    remintcal=$(mktemp)
     while :; do
-#        checkgeom
-#        output=$(clear; cal -${MONDAYFIRST:-s}wy ${REF})
-#        printf "$output"
-        clear
-        cal -${MONDAYFIRST:-s}wy ${REF}
-#        cal -${MONDAYFIRST:-s}wy ${REF} #| center
-#        i=$((((LINES/2))-19))
-#        tput clear; tput cup $i 38; cal -${MONDAYFIRST:-s}wy ${REF} |
-#        while read; do tput cup $((++i)) 38; printf "$REPLY"; done
+        checkgeom
+        mainoutput=$(clear; script -q -c \
+            "(tput cup $((((LINES/2))-17)); cal -${MONDAYFIRST:-s}wy ${REF})" \
+            ${remintcal} \
+            | less -R | sed "s/${REF:0:4}//g" \
+            | TAB=$(tput cr; tput cuf $((((COLS/2))-37))) \
+            awk '{print ENVIRON["TAB"] $0}')
+        bottomoutput=$(printf "\n\n${REF}" \
+            | TAB=$(tput cr; tput cuf $((((COLS/2))-3))) \
+            awk '{print ENVIRON["TAB"] $0}')
+        printf "$mainoutput"
+        printf "$bottomoutput"
         read -rsn1
         case $REPLY in
             "," | "Y" | "P" | "p")
@@ -492,6 +496,7 @@ overview() {
                 fi
                 continue ;;
             *)
+                rm "$remintcal"
                 return ;;
         esac
     done
