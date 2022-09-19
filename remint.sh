@@ -99,8 +99,9 @@ $indent © 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 }
 
 showhelp() {
-    while true ; do
-        statichelp
+    while :; do
+        output=$(clear; statichelp)
+        printf "$output"
         read -rsn1
             case $REPLY in
                 "I" | "i")
@@ -173,8 +174,9 @@ to $(date -d $REF+$((MSPAN-1))months '+%B %Y') \033[0m\n\n"
 }
 
 ui() {
-    while true ; do
-        page
+    while :; do
+        output=$(clear; page)
+        printf "$output"
         read -rsn1
         case $REPLY in
             "P" | "p" | ",")
@@ -446,10 +448,13 @@ ui() {
 }
 
 overview() {
-    while true ; do
+    while :; do
+#        checkgeom
+#        output=$(clear; cal -${MONDAYFIRST:-s}wy ${REF})
+#        printf "$output"
         clear
-#        tput cup $((((LINES/2))-19)) 38
-        cal -${MONDAYFIRST:-s}wy ${REF} #| center
+        cal -${MONDAYFIRST:-s}wy ${REF}
+#        cal -${MONDAYFIRST:-s}wy ${REF} #| center
 #        i=$((((LINES/2))-19))
 #        tput clear; tput cup $i 38; cal -${MONDAYFIRST:-s}wy ${REF} |
 #        while read; do tput cup $((++i)) 38; printf "$REPLY"; done
