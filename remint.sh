@@ -421,6 +421,9 @@ ui() {
                 showhelp ;;
 
             "Q" | "q")
+                if [[ "$COLORINVERTED" = "yes" ]]; then
+                    invertcolors
+                fi
                 tput cnorm && exit 0 ;;
 
             *)
