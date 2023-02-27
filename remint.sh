@@ -324,19 +324,19 @@ ui() {
                 fi
                 if [[ -n "$EDITOR" ]]; then
                     case "$EDITOR" in
-                        "kak")
+                        "kak"*)
                             kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
                             ;;
-                        "emacs")
+                        "emacs"*)
                             emacs -nw +2 "$FILE" # How to insert $REF programmatically?
                             ;;
-                        "vim")
+                        "vim"*)
                             vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
                             ;;
-                        "vi")
+                        "vi"*)
                             vi +2 "$FILE" # How to insert $REF programmatically?
                             ;;
-                        "nano")
+                        "nano"*)
                             nano +2 "$FILE" # How to insert $REF programmatically?
                             ;;
                         *)
