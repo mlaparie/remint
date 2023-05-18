@@ -328,7 +328,7 @@ ui() {
                             kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
                             ;;
                         "emacs"*)
-                            emacs -nw +2 "$FILE" # How to insert $REF programmatically?
+			    emacsclient -nw -c +2 "$FILE" -a 'emacs -nw +2 "$FILE"' # How to insert $REF programmatically?
                             ;;
                         "vim"*)
                             vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
@@ -347,7 +347,7 @@ ui() {
                     kak "$FILE" -e "execute-keys oREM<space>$REF<space>"
                 elif
                     type emacs &> /dev/null; then
-                    emacs -nw +2 "$FILE" # How to insert $REF programmatically?
+		    emacsclient -nw -c +2 "$FILE" -a 'emacs -nw +2 "$FILE"' # How to insert $REF programmatically?
                 elif
                     type vim &> /dev/null; then
                     vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
@@ -370,12 +370,19 @@ ui() {
                     COLORINVERTED="yes"
                 fi
                 if [[ -n "$EDITOR" ]]; then
-                    $EDITOR "$FILE"
+                    case "$EDITOR" in
+                        "emacs"*)
+			    emacsclient -nw -c "$FILE" -a 'emacs -nw "$FILE"' # How to insert $REF programmatically?
+                            ;;
+                        *)
+                            $EDITOR "$FILE"
+                            ;;
+                    esac
                 elif type kak &> /dev/null; then
                         kak "$FILE"
                 elif
                     type emacs &> /dev/null; then
-                    emacs -nw "$FILE"
+		    emacsclient -nw -c "$FILE" -a 'emacs -nw "$FILE"' # How to insert $REF programmatically?
                 elif
                     type vim &> /dev/null; then
                     vim "$FILE"
