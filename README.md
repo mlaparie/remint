@@ -56,7 +56,7 @@ CUSTOM=""           # Add any extra Remind arguments you may need here.
 ```
 NAVIGATION
   , p  Prev page          t  Today
-  . n  Next page          g  Go to
+  . n  Next page          g  Go to (yyyy, yyyymmdd, yyyy-mm-dd)
   h/l  -1/+1 day          o  Navigate from year overview
   k/j  -1/+1 week         q  Quit
   M/m  -1/+1 month    other  Quit with prompt

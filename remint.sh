@@ -76,7 +76,7 @@ $indent A simple terminal UI wrapper for D. Skoll's Remind calendar program
 
 $indent NAVIGATION
 $indent   \033[7m , p \033[0m  Prev page     \033[7m     t \033[0m  Today
-$indent   \033[7m . n \033[0m  Next page     \033[7m     g \033[0m  Go to
+$indent   \033[7m . n \033[0m  Next page     \033[7m     g \033[0m  Go to (yyyy, yyyymmdd, yyyy-mm-dd)
 $indent   \033[7m h/l \033[0m  -1/+1 day     \033[7m     o \033[0m  Navigate from year overview
 $indent   \033[7m k/j \033[0m  -1/+1 week    \033[7m     q \033[0m  Quit
 $indent   \033[7m M/m \033[0m  -1/+1 month   \033[7m other \033[0m  Quit with prompt
