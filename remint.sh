@@ -26,7 +26,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# Configuration
 # Variables below can be toggled from the TUI, those are the default values
+# They can be altered here directly, or placed into a 'remint.conf' file
+# alongside 'remint.sh' or in your Remind data directory (~/.reminders,
+# ~/.config/remind, or one set in DOTREMINDERS) to persist after updates.
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
 			     # data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
@@ -44,7 +48,10 @@ MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays
 REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
 		    # search patterns or scroll long outputs. Beware that not
 		    # all pagers can handle Remind's color and escape colors
-		    # correctly; "less -Ri" can
+                    # correctly; "less -Ri" can
+INFODURATION="1"    # Duration (in s) of displayed messages; the UI will be
+                    # be unresponsive until info messages disappear.
+CUSTOM=""           # Add any extra Remind arguments you may need here.
 
 # Initialization
 sleep 0.05 # Give the terminal some time to spawn if not already opened
@@ -83,18 +90,21 @@ $indent   \033[7m r 0 \033[0m  Reset default page span of current mode
 $indent   \033[7m   z \033[0m  Toggle Monday/Sunday as first day of the week
 $indent   \033[7m : x \033[0m  Toggle 24h format
 $indent   \033[7m   d \033[0m  Toggle day of the year and week number
-$indent   \033[7m   / \033[0m  Pipe to pager (e.g. to search pattern, press h for help))
+$indent   \033[7m   / \033[0m  Pipe to pager (e.g. to search pattern, press h for help)
 $indent   \033[7m   f \033[0m  Toggle fixed/collapsed cell spacing
 $indent   \033[7m   i \033[0m  Invert terminal background and foreground colors
 $indent   \033[7m   c \033[0m  Toggle Remind colors
+$indent   \033[7m 0-9 \033[0m  Adjust duration (in s) of temporary messages (e.g. git, back up)
 $indent   \033[7m   ? \033[0m  Show this help
 
 $indent DATA
-$indent   \033[7m   a \033[0m  Add event at selection
+$indent   \033[7m   a \033[0m  Add event at selection 
 $indent   \033[7m   e \033[0m  Edit data file
 $indent   \033[7m   b \033[0m  Back up data
+$indent   \033[7m   > \033[0m  Push *.rem file(s) to git repository
+$indent   \033[7m   < \033[0m  Pull *.rem file(s) from git repository
 
-$indent © 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
+$indent © 2023 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 "
 }
 
@@ -138,10 +148,10 @@ by Remind. I know that frustration."
     clear
     if [[ "$VIEW" = "calendar" ]] && [[ "$PREFIX" = "+" ]]; then
         remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${WSPAN} -b${FORMAT} \
-            -w${COLS}${SPACING} ${INPUT} ${REF}
+            -w${COLS}${SPACING} ${CUSTOM} ${INPUT} ${REF}
     elif [[ "$VIEW" = "calendar" ]] && [[ "$PREFIX" = "" ]]; then
         remind ${COLOR} -${MONDAYFIRST}cu${PREFIX}${MSPAN} -b${FORMAT} \
-            -w${COLS}${SPACING} ${INPUT} ${REF}
+            -w${COLS}${SPACING} ${CUSTOM} ${INPUT} ${REF}
     elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "+" ]]; then
         if [[ "$WSPAN" -gt "1" ]]; then
             printf "\033[7m Weeks $(date -d $REF '+%W') \
@@ -150,7 +160,7 @@ to $(date -d $REF+$((WSPAN-1))weeks '+%W (%Y)') \033[0m\n\n"
             printf "\033[7m Week $(date -d $REF '+%W (%Y)') \033[0m\n\n"
         fi
         remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${WSPAN} -b${FORMAT} \
-            ${INPUT} ${REF}
+            ${CUSTOM} ${INPUT} ${REF}
         printf "\n"
     elif [[ "$VIEW" = "list" ]] && [[ "$PREFIX" = "" ]]; then
         if [[ "$MSPAN" -gt "1" ]]; then
@@ -160,7 +170,7 @@ to $(date -d $REF+$((MSPAN-1))months '+%B %Y') \033[0m\n\n"
             printf "\033[7m $(date -d $REF '+%B %Y') \033[0m\n\n"
         fi
         remind ${COLOR} -${MONDAYFIRST}s${PREFIX}${MSPAN} -b${FORMAT} \
-            ${INPUT} ${REF}
+            ${CUSTOM} ${INPUT} ${REF}
         printf "\n"
     fi
     
@@ -247,7 +257,6 @@ ui() {
                 continue ;;
             
             "D" | "d")
-                clear
                 if [[ "$SHOWDOYWOY" = "yes" ]]; then
                     SHOWDOYWOY="no"
                 else
@@ -301,7 +310,7 @@ ui() {
                 fi
                 continue ;;
 
-            "0" | "R" | "r")
+            "R" | "r")
                 if [[ "$PREFIX" = "+" ]]; then
                     WSPAN=$WEEKSPAN
                 elif [[ "$PREFIX" = "" ]]; then
@@ -407,7 +416,8 @@ ui() {
                 else
                     printf "\033[7m >_ \033[0m Data successfully backed up."
                 fi
-                sleep 2 && ui ;;
+                sleep $INFODURATION
+		ui ;;
             
             "G" | "g")
                 goto
@@ -423,6 +433,56 @@ ui() {
                 invertcolors
                 continue ;;
     	    
+            ">")
+		gitsync "push"
+                sleep $INFODURATION
+		ui ;;
+	    
+            "<")
+		gitsync "pull"
+                sleep $INFODURATION
+		ui ;;
+
+            "0")
+                INFODURATION="0"
+		ui ;;
+
+            "1")
+                INFODURATION="1"
+		ui ;;
+
+            "2")
+                INFODURATION="2"
+		ui ;;
+
+            "3")
+                INFODURATION="3"
+		ui ;;
+
+            "4")
+                INFODURATION="4"
+		ui ;;
+
+            "5")
+                INFODURATION="5"
+		ui ;;
+
+            "6")
+                INFODURATION="6"
+		ui ;;
+
+            "7")
+                INFODURATION="7"
+		ui ;;
+
+            "8")
+                INFODURATION="8"
+		ui ;;
+
+            "9")
+                INFODURATION="9"
+		ui ;;
+
             "?")
                 checkgeom
                 showhelp ;;
@@ -542,6 +602,123 @@ years within [1990-5990]. We have 4000 years to make history."
     fi
 }
 
+gitsync() {
+    tput cup $((LINES-2)) 28
+    if [[ "$1" = "push" ]]; then
+	if [[ "$INPUT" = "$FILE" ]]; then
+	    printf "\033[7m >_ \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
+	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
+            if ! [[ -d "$INPUT/../.git" ]]; then
+		printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	    else
+		cd ${INPUT}/..
+		git add reminders/*.rem
+		if [[ "$(git status --porcelain --untracked-files=no | wc -l)" -gt 0 ]]; then
+		    clear
+		    git commit -m "Updated from Remint, $USER@$(hostname)"
+		    git push || err=1
+		    cd - > /dev/null 2>&1
+		    printf "$output"
+		    tput cup $((LINES-2)) 28
+		    if [[ "$err" -eq "1" ]]; then
+			printf "\033[7m >_ \033[0m Failed to push data to git repository; try git manually to troubleshoot."
+		    else
+			printf "\033[7m >_ \033[0m Data successfully pushed to git repository."
+		    fi
+		else
+		    printf "\033[7m >_ \033[0m Nothing new to push to git repository."
+		fi
+	    fi
+	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
+	    if ! [[ -d "$INPUT/.git" ]]; then
+		printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	    else
+		cd ${INPUT}
+		git add *.rem
+		if [[ "$(git status --porcelain --untracked-files=no | wc -l)" -gt 0 ]]; then
+		    clear
+		    git commit -m "Updated from Remint, $USER@$(hostname)"
+		    git push || err=1
+		    cd - > /dev/null 2>&1
+		    printf "$output"
+		    tput cup $((LINES-2)) 28
+		    if [[ "$err" -eq "1" ]]; then
+			printf "\033[7m >_ \033[0m Failed to push data to git repository; try git manually to troubleshoot."
+		    else
+			printf "\033[7m >_ \033[0m Data successfully pushed to git repository."
+		    fi
+		else
+		    printf "\033[7m >_ \033[0m Nothing new to push to git repository."
+		fi
+	    fi
+	fi
+    elif [[ "$1" = "pull" ]]; then
+	if [[ -f "$INPUT" ]]; then
+	    printf "\033[7m >_ \033[0m The 'git pull' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
+	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
+            if ! [[ -d "$INPUT/../.git" ]]; then
+		printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	    else
+		cd ${INPUT}/..
+		printf "\033[7m >_ \033[0m Fetching…"
+		if [[ "$(git remote update > /dev/null 2>&1 && git status | wc -l)" -gt 8 ]]; then
+		    git pull --quiet || err=1
+		    cd - > /dev/null 2>&1
+		    output=$(clear; page)
+		    printf "$output"
+		    tput cup $((LINES-2)) 28
+		    if [[ "$err" -eq "1" ]]; then
+			printf "\033[7m >_ \033[0m Fetching… Failed to pull data from git repository; try git manually to troubleshoot."
+		    else
+			printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository."
+		    fi
+		else
+		    printf " Nothing new to pull from git repository."
+		fi
+	    fi
+	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
+	    if ! [[ -d "$INPUT/.git" ]]; then
+		printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	    else
+		cd ${INPUT}
+		printf "\033[7m >_ \033[0m Fetching…"
+		if [[ "$(git remote update > /dev/null 2>&1 && git status | wc -l)" -gt 8 ]]; then
+		    git pull --quiet || err=1
+		    cd - > /dev/null 2>&1
+		    output=$(clear; page)
+		    printf "$output"
+		    tput cup $((LINES-2)) 28
+		    if [[ "$err" -eq "1" ]]; then
+			printf "\033[7m >_ \033[0m Fetching… Failed to pull data from git repository; try git manually to troubleshoot."
+		    else
+			printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository."
+		    fi
+		else
+		    printf " Nothing new to pull from git repository."
+		fi
+	    fi
+	fi
+    fi
+}
+
+source_config() {
+    if [[ -f "$(dirname "$(realpath -s "$0")")/remint.conf" ]]; then
+	config="\033[1mConfiguration:\033[0m $(dirname "$(realpath -s "$0")")/remint.conf."
+	source $(dirname "$(realpath -s "$0")")/remint.conf
+    elif [[ -d "$INPUT" ]] && [[ "$INPUT" = "$HOME/.config/remind/reminders" ]] && [[ -f "$INPUT/../remint.conf" ]]; then
+	config="\033[1mConfiguration:\033[0m $HOME/.config/remind/remint.conf."
+	source ${INPUT}/../remint.conf
+    elif [[ -d "$INPUT" ]] && ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]] && [[ -f "$INPUT/remint.conf" ]]; then
+	config="\033[1mConfiguration:\033[0m $INPUT/remint.conf."
+	source ${INPUT}/remint.conf
+    else
+	config="No remint.conf found, using defaults from the script."
+    fi
+    config=${config/$HOME/'~'}
+    WSPAN=$WEEKSPAN
+    MSPAN=$MONTHSPAN
+}
+
 invertcolors() {
     clear
     if [[ "$COLORINVERTED" = "yes" ]]; then
@@ -570,7 +747,7 @@ checkgeom() {
 case "$1" in
     "")
 	if [[ -n "$DOTREMINDERS" ]] && [[ -e "$DOTREMINDERS" ]]; then
-         INPUT="$DOTREMINDERS"
+            INPUT="$DOTREMINDERS"
         elif [[ -e "$HOME/.config/remind/reminders" ]]; then
             INPUT="$HOME/.config/remind/reminders"
         elif [[ -e "$HOME/.reminders" ]]; then
@@ -590,15 +767,30 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 #            		"$f" != *".rem" && "$f" != *".purged" ]] && \
 #                	printf ";; INCLUDE $f\n" >> $FILE
 #            done
-            page && tput cup $((LINES-2)) 28
-            printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
-            sleep 3
+	    source_config
+            output=$(clear; page)
+            printf "$output"
+	    tput cup $((LINES-2)) 28
+            printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+            sleep $INFODURATION
 	elif [[ -d "$INPUT" && -f "$INPUT/100-remint.rem" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
+	    source_config
+            output=$(clear; page)
+            printf "$output"
+	    tput cup $((LINES-2)) 28
+            printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+            sleep $INFODURATION
 	elif [[ -f "$INPUT" ]]; then
             FILE="$INPUT"
+	    source_config
+            output=$(clear; page)
+            printf "$output"
+	    tput cup $((LINES-2)) 28
+            printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+            sleep $INFODURATION
 	fi
-	ui ;;
+        ui ;;
     
     "h" | "help" | "-h" | "--h" | "-help" | "--help")
         statichelp
@@ -617,16 +809,24 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 #            		"$f" != *".rem" && "$f" != *".purged" ]] && \
 #                	printf ";; INCLUDE $f\n" >> $FILE
 #            done
-            page && tput cup $((LINES-2)) 28
-            printf "\033[7m >_ \033[0m New data file created: %s" "$FILE"
-            sleep 3
+	    source_config
+            output=$(clear; page)
+            printf "$output"
+	    tput cup $((LINES-2)) 28
+            printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+            sleep $INFODURATION
 	elif [[ -d "$1" && -f "$1/100-remint.rem" ]]; then
                 INPUT="$1"
                 FILE="$INPUT/$DEFAULTFILE"
-                echo $FILE
+		source_config
+		output==$(clear; page)
+		printf "$output"
+		tput cup $((LINES-2)) 28
+		printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+		sleep $INFODURATION
         else
-            printf "Error: invalid data file. Press any key to quit."
+            printf "\033[1mError:\033[0m invalid data file. Press any key to quit."
             read -rsn1 && exit 1
         fi
-        ui ;;
+	ui ;;
 esac
