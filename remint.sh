@@ -338,6 +338,17 @@ ui() {
                             ;;
                         "emacs"*)
 			    emacsclient -nw -c +2 "$FILE" -a 'emacs -nw +2 "$FILE"' # How to insert $REF programmatically?
+			    # emacsref=$(mktemp)
+			    # echo ${REF} > /tmp/emacsref.tmp
+			    # EMACSFILE=${FILE} emacsclient -nw -c -e '(with-current-buffer (find-file-noselect (getenv "EMACSFILE"))
+                            #                         (goto-line 2)
+                            #                         (insert (concat (shell-command-to-string "cat /tmp/emacsref.tmp") " "))
+                            #                         (goto-line 2)
+                            #                         (goto-char (end-of-line))
+                            #                         (switch-to-buffer (current-buffer)))' \
+			    # 				-a "emacs -nw \"/tmp/toto.txt\" -e '(progn (goto-line 2) (newline)
+                            #                                                                  (goto-line 2)
+                            #                                                                  (insert (getenv \"REF\") \" \"))'"
                             ;;
                         "vim"*)
                             vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
@@ -357,6 +368,15 @@ ui() {
                 elif
                     type emacs &> /dev/null; then
 		    emacsclient -nw -c +2 "$FILE" -a 'emacs -nw +2 "$FILE"' # How to insert $REF programmatically?
+			    # emacsclient -nw -c -e '(with-current-buffer (find-file-noselect "/tmp/toto.txt")
+                            #                         (goto-line 2)
+                            #                         (newline)
+                            #                         (goto-line 2)
+                            #                         (insert (concat (getenv "REF") " "))
+                            #                         (switch-to-buffer (current-buffer)))' \
+			    # 				-a "emacs -nw \"/tmp/toto.txt\" -e '(progn (goto-line 2) (newline)
+                            #                                                                  (goto-line 2)
+                            #                                                                  (insert (getenv \"REF\") \" \"))'"
                 elif
                     type vim &> /dev/null; then
                     vim +2 -c "put ='$REF '" -c "startinsert!" "$FILE"
@@ -608,94 +628,57 @@ gitsync() {
 	if [[ "$INPUT" = "$FILE" ]]; then
 	    printf "\033[7m >_ \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
 	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
-            if ! [[ -d "$INPUT/../.git" ]]; then
-		printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
-	    else
-		cd ${INPUT}/..
-		git add reminders/*.rem
-		if [[ "$(git status --porcelain --untracked-files=no | wc -l)" -gt 0 ]]; then
-		    clear
-		    git commit -m "Updated from Remint, $USER@$(hostname)"
-		    git push || err=1
-		    cd - > /dev/null 2>&1
-		    printf "$output"
-		    tput cup $((LINES-2)) 28
-		    if [[ "$err" -eq "1" ]]; then
-			printf "\033[7m >_ \033[0m Failed to push data to git repository; try git manually to troubleshoot."
-		    else
-			printf "\033[7m >_ \033[0m Data successfully pushed to git repository."
-		    fi
-		else
-		    printf "\033[7m >_ \033[0m Nothing new to push to git repository."
-		fi
-	    fi
+	    up="/.."
 	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
-	    if ! [[ -d "$INPUT/.git" ]]; then
-		printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
-	    else
-		cd ${INPUT}
-		git add *.rem
-		if [[ "$(git status --porcelain --untracked-files=no | wc -l)" -gt 0 ]]; then
-		    clear
-		    git commit -m "Updated from Remint, $USER@$(hostname)"
-		    git push || err=1
-		    cd - > /dev/null 2>&1
-		    printf "$output"
-		    tput cup $((LINES-2)) 28
-		    if [[ "$err" -eq "1" ]]; then
-			printf "\033[7m >_ \033[0m Failed to push data to git repository; try git manually to troubleshoot."
-		    else
-			printf "\033[7m >_ \033[0m Data successfully pushed to git repository."
-		    fi
+	    up=""
+	fi
+        if [[ -d "$INPUT" ]] && ! [[ -d "$INPUT""$up""/.git" ]]; then
+	    printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	elif [[ -d "$INPUT""$up""/.git" ]]; then
+	    cd ${INPUT}${up}
+	    git add *.rem reminders/*.rem
+	    if [[ "$(git status --porcelain --untracked-files=no | wc -l)" -gt 0 ]]; then
+		clear
+		git commit -m "Updated from Remint, $USER@$(hostname)"
+		git push || err=1
+		cd - > /dev/null 2>&1
+		printf "$output"
+		tput cup $((LINES-2)) 28
+		if [[ "$err" -eq "1" ]]; then
+		    printf "\033[7m >_ \033[0m Failed to push data to git repository; try git manually to troubleshoot."
 		else
-		    printf "\033[7m >_ \033[0m Nothing new to push to git repository."
+		    printf "\033[7m >_ \033[0m Data successfully pushed to git repository."
 		fi
+	    else
+		printf "\033[7m >_ \033[0m Nothing new to push to git repository."
 	    fi
 	fi
     elif [[ "$1" = "pull" ]]; then
 	if [[ -f "$INPUT" ]]; then
 	    printf "\033[7m >_ \033[0m The 'git pull' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
 	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
-            if ! [[ -d "$INPUT/../.git" ]]; then
-		printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
-	    else
-		cd ${INPUT}/..
-		printf "\033[7m >_ \033[0m Fetching…"
-		if [[ "$(git remote update > /dev/null 2>&1 && git status | wc -l)" -gt 8 ]]; then
-		    git pull --quiet || err=1
-		    cd - > /dev/null 2>&1
-		    output=$(clear; page)
-		    printf "$output"
-		    tput cup $((LINES-2)) 28
-		    if [[ "$err" -eq "1" ]]; then
-			printf "\033[7m >_ \033[0m Fetching… Failed to pull data from git repository; try git manually to troubleshoot."
-		    else
-			printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository."
-		    fi
-		else
-		    printf " Nothing new to pull from git repository."
-		fi
-	    fi
+	    up="/.."
 	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
-	    if ! [[ -d "$INPUT/.git" ]]; then
-		printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
-	    else
-		cd ${INPUT}
-		printf "\033[7m >_ \033[0m Fetching…"
-		if [[ "$(git remote update > /dev/null 2>&1 && git status | wc -l)" -gt 8 ]]; then
-		    git pull --quiet || err=1
-		    cd - > /dev/null 2>&1
-		    output=$(clear; page)
-		    printf "$output"
-		    tput cup $((LINES-2)) 28
-		    if [[ "$err" -eq "1" ]]; then
-			printf "\033[7m >_ \033[0m Fetching… Failed to pull data from git repository; try git manually to troubleshoot."
-		    else
-			printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository."
-		    fi
+	    up=""
+	fi
+        if [[ -d "$INPUT" ]] && ! [[ -d "$INPUT""$up""/.git" ]]; then
+	    printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	elif [[ -d "$INPUT""$up""/.git" ]]; then
+	    cd ${INPUT}${up}
+	    printf "\033[7m >_ \033[0m Fetching…"
+	    if [[ "$(git remote update > /dev/null 2>&1 && git status | wc -l)" -gt 8 ]]; then
+		git pull --quiet || err=1
+		cd - > /dev/null 2>&1
+		output=$(clear; page)
+		printf "$output"
+		tput cup $((LINES-2)) 28
+		if [[ "$err" -eq "1" ]]; then
+		    printf "\033[7m >_ \033[0m Fetching… Failed to pull data from git repository; try git manually to troubleshoot."
 		else
-		    printf " Nothing new to pull from git repository."
+		    printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository."
 		fi
+	    else
+		printf " Nothing new to pull from git repository."
 	    fi
 	fi
     fi
