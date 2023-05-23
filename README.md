@@ -15,9 +15,11 @@
 ## Usage
 Make sure Dianne Skoll's `remind` is intalled and that `remint.sh` is executable with `chmod +x /path/to/remint.sh`, then run with `./remint.sh /path/to/a/reminders/file/or/directory` (if the argument is a directory, then `remint` will read from all `*.rem` files in it). `remint` will try default locations if none is supplied as argument, as well as the `DOTREMINDERS` environment variable. I use it as a script executed in a new terminal window when clicking on the clock of my system bar.
 
-`remint` allows synchronizing to and from a git repository if you use `*.rem` files from a folder initialized as a git repository. Running `remint` on a single file supplied as CLI argument or on a data folder not containing files named as `<something>.rem` will not allow git synchronization; this is to limit the risk of synchronizing unwanted files.
+`remint` allows synchronizing to and from a git repository if you use `*.rem` files from a folder initialized as a git repository. Running `remint` on a single file supplied as CLI argument or on a data folder not containing files named as `<something>.rem` will not allow git synchronization; this is to limit the risk of synchronizing unwanted files. See git synchronization in action in the video below:
 
-Short demo videos are available [here](demo/remint.mp4) (base functions, initial version) and [here](demo/remint_2.mp4) (a few new functions in a later update).
+![demo/remint_20230524_git.jpg](demo/remint_20230524_git.mp4)
+
+Other short demos of the features are available [here](demo/remint.mp4) (some base functions, initial version) and [here](demo/remint_2.mp4) (a few new functions in a later update).
 
 ![](demo/shot0001.jpg)
 ![](demo/shot0002.jpg)
