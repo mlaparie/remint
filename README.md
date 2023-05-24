@@ -18,7 +18,7 @@ Make sure Dianne Skoll's `remind` is intalled and that `remint.sh` is executable
 `remint` allows synchronizing to and from a git repository if you use `*.rem` files from a folder initialized as a git repository. Running `remint` on a single file supplied as CLI argument or on a data folder not containing files named as `<something>.rem` will not allow git synchronization; this is to limit the risk of synchronizing unwanted files. See git synchronization in action in the video below:
 
 ![](demo/remint_20230524_git.jpg)
-![(Click here to watch video.)](demo/remint_20230524_git.mp4)
+[(Click here to watch video.)](demo/remint_20230524_git.mp4)
 
 Other short demos of the features are available [here](demo/remint.mp4) (some base functions, initial version) and [here](demo/remint_2.mp4) (a few new functions in a later update).
 
