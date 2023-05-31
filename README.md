@@ -34,24 +34,27 @@ Other short demos of the features are available [here](demo/remint.mp4) (some ba
 ```
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
 			     # data path is a directory
-COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only
-FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm
-VIEW="calendar"     # VIEW="list" to display the agenda by default
-COLORINVERTED="no"  # COLORINVERTED="yes" to toggle light/dark default mode
-SHOWDOYWOY="yes"    # SHOWDOYWOY="no" to hide day of year and week number
-WEEKSPAN="4"        # Number of weeks to show by default in week view
-MONTHSPAN="1"       # Number of months to show by default in month view
+COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only.
+FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm.
+VIEW="calendar"     # VIEW="list" to display the agenda by default.
+COLORINVERTED="no"  # COLORINVERTED="yes" to toggle light/dark default mode.
+SHOWDOYWOY="yes"    # SHOWDOYWOY="no" to hide day of year and week number.
+WEEKSPAN="4"        # Number of weeks to show by default in week view.
+MONTHSPAN="1"       # Number of months to show by default in month view.
 PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
-                    # else if PREFIX="", then the default view shows months
+                    # else if PREFIX="", then the default view shows months.
 SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
-		    # else SPACING=",n,m" where n and m are numbers
-MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays
+		    # else SPACING=",n,m" where n and m are numbers.
+MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays.
 REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
 		    # search patterns or scroll long outputs. Beware that not
 		    # all pagers can handle Remind's color and escape colors
-                    # correctly; "less -Ri" can
+                    # correctly; "less -Ri" can.
 INFODURATION="1"    # Duration (in s) of displayed messages; the UI will be
                     # be unresponsive until info messages disappear.
+AUTOSYNC="no"       # "yes" to automatically synchronize from and to git
+                    # at startup (git pull) and when quitting (git push), else
+                    #"no"; "yes" requires a reminders file in a git repository.
 CUSTOM=""           # Add any extra Remind arguments you may need here.
 ```
 
