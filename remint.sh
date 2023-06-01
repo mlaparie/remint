@@ -515,7 +515,7 @@ ui() {
 
             "Q" | "q")
 		if [[ "$AUTOSYNC" = "yes" ]]; then
-		    output="\e[2J"
+		    output=$(clear)
 		    gitsync "push"
 		    sleep $INFODURATION
 		fi
@@ -531,7 +531,7 @@ ui() {
                 case $REPLY in
                     "Y" | "y" | "")
 			if [[ "$AUTOSYNC" = "yes" ]]; then
-			    output="\e[2J"
+			    output=$(clear)
 			    gitsync "push"
 			    sleep $INFODURATION
 			fi
@@ -669,6 +669,9 @@ gitsync() {
 		else
 		    info=$(printf "\033[7m >_ \033[0m Data successfully pushed to git repository.") && printf "%s" "$info"
 		fi
+	    elif [[ "$(git status --untracked-files=no | grep 'Changes not staged' | wc -l)" -eq "1" ]]; then
+		tput cup $((LINES-2)) 28
+		info=$(printf "\033[7m !! \033[0m Nothing new in .rem files to push to git repository, but you have unstaged changes in other files.") && printf "%s" "$info"		
 	    else
 		tput cup $((LINES-2)) 28
 		info=$(printf "\033[7m !! \033[0m Nothing new to push to git repository.") && printf "%s" "$info"
@@ -699,12 +702,12 @@ gitsync() {
 		    info=$(printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository.") && printf "%s" "$info"
 		fi
 	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'Changes not staged' | wc -l)" -eq "1" ]]; then
-		info=$(printf "\033[7m !! \033[0m Fetching… Failed: your local reminders have unstaged changes.") && printf "%s" "$info"
+		info=$(printf "\033[7m !! \033[0m Fetching… Failed: you have unstaged changes in your local files.") && printf "%s" "$info"
 	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'up to date' | wc -l)" -eq "1" ]] && \
 		 [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'Changes not staged' | wc -l)" -eq "0" ]]; then
 		info=$(printf "\033[7m !! \033[0m Fetching… Nothing new to pull from git repository.") && printf "%s" "$info"
 	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'ahead' | wc -l)" -eq "1" ]]; then
-		info=$(printf "\033[7m !! \033[0m Fetching… Failed: your local reminders are ahead of the remote git repository.") && printf "%s" "$info"
+		info=$(printf "\033[7m !! \033[0m Fetching… Failed: your local files are ahead of the remote git repository.") && printf "%s" "$info"
 	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'diverged' | wc -l)" -eq "1" ]]; then
 		info=$(printf "\033[7m !! \033[0m Fetching… Failed: your local reminders and the remote git repository have diverged.") && printf "%s" "$info"
 	    fi
