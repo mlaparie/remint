@@ -637,18 +637,18 @@ gitsync() {
     tput cup $((LINES-2)) 28
     if [[ "$1" = "push" ]]; then
 	if [[ "$INPUT" = "$FILE" ]]; then
-	    printf "\033[7m >_ \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
+	    printf "\033[7m !! \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
 	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up="/.."
 	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up=""
 	fi
         if [[ -d "$INPUT" ]] && ! [[ -d "$INPUT""$up""/.git" ]]; then
-	    printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	    printf "\033[7m !! \033[0m Your Remind data is not in a git folder, you must 'git init' first."
 	elif [[ -d "$INPUT""$up""/.git" ]]; then
 	    cd ${INPUT}${up}
 	    git add *.rem reminders/*.rem
-	    if [[ "$(git status --porcelain --untracked-files=no | wc -l)" -gt 0 ]]; then
+	    if [[ "$(git status --untracked-files=no | grep 'ahead' | wc -l)" -eq "1" ]]; then
 		clear
 		git commit -m "Updated from Remint, $USER@$(hostname)"
 		git push || err=1
@@ -656,40 +656,48 @@ gitsync() {
 		printf "$output"
 		tput cup $((LINES-2)) 28
 		if [[ "$err" -eq "1" ]]; then
-		    printf "\033[7m >_ \033[0m Failed to push data to git repository; try git manually to troubleshoot."
+		    printf "\033[7m !! \033[0m Failed to push to git repository; try git manually to troubleshoot."
 		else
 		    printf "\033[7m >_ \033[0m Data successfully pushed to git repository."
 		fi
 	    else
-		printf "\033[7m >_ \033[0m Nothing new to push to git repository."
+		tput cup $((LINES-2)) 28
+		printf "\033[7m !! \033[0m Nothing new to push to git repository."
 	    fi
 	fi
     elif [[ "$1" = "pull" ]]; then
 	if [[ -f "$INPUT" ]]; then
-	    printf "\033[7m >_ \033[0m The 'git pull' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
+	    printf "\033[7m !! \033[0m The 'git pull' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
 	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up="/.."
 	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up=""
 	fi
         if [[ -d "$INPUT" ]] && ! [[ -d "$INPUT""$up""/.git" ]]; then
-	    printf "\033[7m >_ \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	    printf "\033[7m !! \033[0m Your Remind data is not in a git folder, you must 'git init' first."
 	elif [[ -d "$INPUT""$up""/.git" ]]; then
 	    cd ${INPUT}${up}
 	    printf "\033[7m >_ \033[0m Fetching…"
-	    if [[ "$(git remote update > /dev/null 2>&1 && git status | wc -l)" -gt 8 ]]; then
+	    tput cup $((LINES-2)) 28
+	    if [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'behind' | wc -l)" -eq "1" ]]; then
 		git pull --quiet || err=1
 		cd - > /dev/null 2>&1
 		output=$(clear; page)
 		printf "$output"
-		tput cup $((LINES-2)) 28
 		if [[ "$err" -eq "1" ]]; then
-		    printf "\033[7m >_ \033[0m Fetching… Failed to pull data from git repository; try git manually to troubleshoot."
+		    printf "\033[7m !! \033[0m Fetching… Failed to pull from git repository; try git manually to troubleshoot."
 		else
 		    printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository."
 		fi
-	    else
-		printf " Nothing new to pull from git repository."
+	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'Changes not staged' | wc -l)" -eq "1" ]]; then
+		printf "\033[7m !! \033[0m Fetching… Failed: your local reminders have unstaged changes."
+	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'up to date' | wc -l)" -eq "1" ]] && \
+		 [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'Changes not staged' | wc -l)" -eq "0" ]]; then
+		printf "\033[7m !! \033[0m Fetching… Nothing new to pull from git repository."
+	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'ahead' | wc -l)" -eq "1" ]]; then
+		printf "\033[7m !! \033[0m Fetching… Failed: your local reminders are ahead of the remote git repository."
+	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'diverged' | wc -l)" -eq "1" ]]; then
+		printf "\033[7m !! \033[0m Fetching… Failed: your local reminders and the remote git repository have diverged."
 	    fi
 	fi
     fi
@@ -788,6 +796,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 	    sleep $INFODURATION
             printf "$output"
 	    gitsync "pull"
+	    sleep $INFODURATION
 	fi
         ui ;;
     
@@ -831,6 +840,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 	    sleep $INFODURATION
 	    printf "$output"
 	    gitsync "pull"
+	    sleep $INFODURATION
 	fi
 	ui ;;
 esac
