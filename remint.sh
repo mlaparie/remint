@@ -435,9 +435,9 @@ ui() {
                 cp "$FILE" "$FILE"_backup_"$(date +'%Y%m%d_%H%M')" || err=1
                 tput cup $((LINES-2)) 28
                 if [[ "$err" -eq "1" ]]; then
-                    info="\033[7m >_ \033[0m Failed to back up data." && print "$info"
+                    printf "\033[7m >_ \033[0m Failed to back up data."
                 else
-                    info="\033[7m >_ \033[0m Data successfully backed up." && print "$info"
+                    printf "\033[7m >_ \033[0m Data successfully backed up."
                 fi
                 sleep $INFODURATION
 		ui ;;
@@ -774,7 +774,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            info="\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. ${config}" ${FILE/#$HOME/'~'} && print "$info"
+            printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. $config" ${FILE/#$HOME/'~'}
             sleep $INFODURATION
 	elif [[ -d "$INPUT" && -f "$INPUT/100-remint.rem" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
@@ -782,7 +782,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            info="\033[7m >_ \033[0m \033[1mData:\033[0m %s. ${config}" ${FILE/#$HOME/'~'} && print "$info"
+            printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
             sleep $INFODURATION
 	elif [[ -f "$INPUT" ]]; then
             FILE="$INPUT"
@@ -790,7 +790,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            info="\033[7m >_ \033[0m \033[1mData:\033[0m %s. ${config}" ${FILE/#$HOME/'~'} && print "$info"
+            printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
             sleep $INFODURATION
 	fi
 	if [[ "$AUTOSYNC" = "yes" ]]; then
@@ -822,7 +822,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. ${config}" ${FILE/#$HOME/'~'} && print "$info"
+            printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. $config" ${FILE/#$HOME/'~'}
             sleep $INFODURATION
 	elif [[ -d "$1" && -f "$1/100-remint.rem" ]]; then
                 INPUT="$1"
@@ -831,7 +831,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 		output==$(clear; page)
 		printf "$output"
 		tput cup $((LINES-2)) 28
-		printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. ${config}" ${FILE/#$HOME/'~'} && print "$info"
+		printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
 		sleep $INFODURATION
         else
             printf "\033[1mError:\033[0m invalid data file. Press any key to quit."
