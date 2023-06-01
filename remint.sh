@@ -78,12 +78,12 @@ $indent 88           '°Ybbd8°°  88      88      88  88  88       88   °Y888
 $indent A simple terminal UI wrapper for D. Skoll's Remind calendar program
 
 $indent NAVIGATION
-$indent   \033[7m , p \033[0m  Prev page     \033[7m     t \033[0m  Today
-$indent   \033[7m . n \033[0m  Next page     \033[7m     g \033[0m  Go to (yyyy, yyyymmdd, yyyy-mm-dd)
+$indent   \033[7m , p \033[0m  Prev page     \033[7m     g \033[0m  Go to (yyyy, yyyymmdd, yyyy-mm-dd)
+$indent   \033[7m . n \033[0m  Next page     \033[7m     t \033[0m  Go to Today
 $indent   \033[7m h/l \033[0m  -1/+1 day     \033[7m     o \033[0m  Navigate from year overview
 $indent   \033[7m k/j \033[0m  -1/+1 week    \033[7m     q \033[0m  Quit
 $indent   \033[7m M/m \033[0m  -1/+1 month   \033[7m other \033[0m  Quit with prompt
-$indent   \033[7m Y/y \033[0m  -1/+1 year
+$indent   \033[7m Y/y \033[0m  -1/+1 year    \033[7m     ? \033[0m  Show this help
 
 $indent VIEW
 $indent   \033[7m   v \033[0m  Toggle calendar/list views
@@ -98,14 +98,13 @@ $indent   \033[7m   f \033[0m  Toggle fixed/collapsed cell spacing
 $indent   \033[7m   i \033[0m  Invert terminal background and foreground colors
 $indent   \033[7m   c \033[0m  Toggle Remind colors
 $indent   \033[7m 0-9 \033[0m  Adjust duration (in s) of temporary messages (e.g. git, back up)
-$indent   \033[7m   ? \033[0m  Show this help
+$indent   \033[7m   ; \033[0m  Show last temporary info message again
 
 $indent DATA
-$indent   \033[7m   a \033[0m  Add event at selection 
+$indent   \033[7m   a \033[0m  Add event at selected day 
 $indent   \033[7m   e \033[0m  Edit data file
 $indent   \033[7m   b \033[0m  Back up data
-$indent   \033[7m   > \033[0m  Push *.rem file(s) to git repository
-$indent   \033[7m   < \033[0m  Pull *.rem file(s) from git repository
+$indent   \033[7m >/< \033[0m  Push/pull *.rem file(s) to/from git repository
 
 $indent © 2023 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 "
@@ -136,14 +135,12 @@ page() {
 
     if [[ "${REF:0:4}" -lt "1990" ]]; then
         tput cup $((LINES-2)) 28
-        printf "\033[7m !! \033[0m Error: years before 1990 are not supported \
-by Remind."
+        info=$(printf "\033[7m !! \033[0m Error: years before 1990 are not supported by Remind.") && printf "%s" "$info"
         REF="1990-01-01"
         read -rsn1
     elif  [[ "${REF:0:4}" -gt "5990" ]]; then
         tput cup $((LINES-2)) 28
-        printf "\033[7m !! \033[0m Error: years ofter 5990 are not supported \
-by Remind. I know that frustration."
+        info=$(printf "\033[7m !! \033[0m Error: years after 5990 are not supported by Remind. I know that frustration.") && printf "%s" "$info"
         REF="5990-12-31"
         read -rsn1
     fi
@@ -435,9 +432,9 @@ ui() {
                 cp "$FILE" "$FILE"_backup_"$(date +'%Y%m%d_%H%M')" || err=1
                 tput cup $((LINES-2)) 28
                 if [[ "$err" -eq "1" ]]; then
-                    printf "\033[7m >_ \033[0m Failed to back up data."
+                    info=$(printf "\033[7m >_ \033[0m Failed to back up data.") && printf "%s" "$info"
                 else
-                    printf "\033[7m >_ \033[0m Data successfully backed up."
+                    info=$(printf "\033[7m >_ \033[0m Data successfully backed up.") && printf "%s" "$info"
                 fi
                 sleep $INFODURATION
 		ui ;;
@@ -470,6 +467,12 @@ ui() {
                 INFODURATION="0"
 		ui ;;
 
+            ";")
+		tput cup $((LINES-2)) 28
+                printf "%s" "$info"
+		sleep $INFODURATION
+                continue ;;
+    	    
             "1")
                 INFODURATION="1"
 		ui ;;
@@ -611,7 +614,7 @@ goto() {
     if [[ "$REPLY" = "" ]]; then
         REF=$(date "+%Y-%m-%d")
     elif ! [[ "${REPLY:0:4}" =~ ^-?[0-9]+$ ]]; then
-        printf "\033[7m !! \033[0m Go to year or date: invalid format."
+        info=$(printf "\033[7m !! \033[0m Go to year or date: invalid format.") && printf "%s" "$info"
         read -rsn1
     elif [[ "${#REPLY}" -eq "4" && "${REPLY}" -ge "1990" && \
         "${REPLY}" -le "5990" ]]
@@ -619,14 +622,13 @@ goto() {
         TMP="${REF:6:10}"
         REF=$(date -d "$(date "+$REPLY-$TMP")" "+%Y-%m-%d")
     elif [[ "${REPLY:0:4}" -lt "1990" || "${REPLY:0:4}" -gt "5990" ]]; then
-        printf "\033[7m !! \033[0m Go to year or date: Remind only supports \
-years within [1990-5990]. We have 4000 years to make history."
+        info=$(printf "\033[7m !! \033[0m Go to year or date: Remind only supports years within [1990-5990]. We have 4000 years to make history.") && printf "%s" "$info"
         read -rsn1
     elif ! date -d "$REPLY" > /dev/null 2>&1; then
-        printf "\033[7m !! \033[0m Go to year or date: invalid date."
+        info=$(printf "\033[7m !! \033[0m Go to year or date: invalid date.") && printf "%s" "$info"
         read -rsn1
     elif [[ $(date -d "$REPLY" "+%Y") -lt "1990" ]]; then
-        printf "\033[7m !! \033[0m Go to year or date: invalid date."
+        info=$(printf "\033[7m !! \033[0m Go to year or date: invalid date.") && printf "%s" "$info"
         read -rsn1
     else
         REF=$(date -d "$REPLY" "+%Y-%m-%d")
@@ -637,14 +639,14 @@ gitsync() {
     tput cup $((LINES-2)) 28
     if [[ "$1" = "push" ]]; then
 	if [[ "$INPUT" = "$FILE" ]]; then
-	    printf "\033[7m !! \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
+	    info=$(printf "\033[7m !! \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS').") && printf "%s" "$info"
 	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up="/.."
 	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up=""
 	fi
         if [[ -d "$INPUT" ]] && ! [[ -d "$INPUT""$up""/.git" ]]; then
-	    printf "\033[7m !! \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	    info=$(printf "\033[7m !! \033[0m Your Remind data is not in a git folder, you must 'git init' first.") && printf "%s" "$info"
 	elif [[ -d "$INPUT""$up""/.git" ]]; then
 	    cd ${INPUT}${up}
 	    git add *.rem reminders/*.rem
@@ -657,28 +659,28 @@ gitsync() {
 		printf "$output"
 		tput cup $((LINES-2)) 28
 		if [[ "$err" -eq "1" ]]; then
-		    printf "\033[7m !! \033[0m Failed to push to git repository; try git manually to troubleshoot."
+		    info=$(printf "\033[7m !! \033[0m Failed to push to git repository; try git manually to troubleshoot.") && printf "%s" "$info"
 		else
-		    printf "\033[7m >_ \033[0m Data successfully pushed to git repository."
+		    info=$(printf "\033[7m >_ \033[0m Data successfully pushed to git repository.") && printf "%s" "$info"
 		fi
 	    else
 		tput cup $((LINES-2)) 28
-		printf "\033[7m !! \033[0m Nothing new to push to git repository."
+		info=$(printf "\033[7m !! \033[0m Nothing new to push to git repository.") && printf "%s" "$info"
 	    fi
 	fi
     elif [[ "$1" = "pull" ]]; then
 	if [[ -f "$INPUT" ]]; then
-	    printf "\033[7m !! \033[0m The 'git pull' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS')."
+	    info=$(printf "\033[7m !! \033[0m The 'git pull' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS').") && printf "%s" "$info"
 	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up="/.."
 	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up=""
 	fi
         if [[ -d "$INPUT" ]] && ! [[ -d "$INPUT""$up""/.git" ]]; then
-	    printf "\033[7m !! \033[0m Your Remind data is not in a git folder, you must 'git init' first."
+	    info=$(printf "\033[7m !! \033[0m Your Remind data is not in a git folder, you must 'git init' first.") && printf "%s" "$info"
 	elif [[ -d "$INPUT""$up""/.git" ]]; then
 	    cd ${INPUT}${up}
-	    printf "\033[7m >_ \033[0m Fetching…"
+	    info=$(printf "\033[7m >_ \033[0m Fetching…") && printf "%s" "$info"
 	    tput cup $((LINES-2)) 28
 	    if [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'behind' | wc -l)" -eq "1" ]]; then
 		git pull --quiet || err=1
@@ -686,19 +688,19 @@ gitsync() {
 		output=$(clear; page)
 		printf "$output"
 		if [[ "$err" -eq "1" ]]; then
-		    printf "\033[7m !! \033[0m Fetching… Failed to pull from git repository; try git manually to troubleshoot."
+		    info=$(printf "\033[7m !! \033[0m Fetching… Failed to pull from git repository; try git manually to troubleshoot.") && printf "%s" "$info"
 		else
-		    printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository."
+		    info=$(printf "\033[7m >_ \033[0m Fetching… Data successfully pulled from git repository.") && printf "%s" "$info"
 		fi
 	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'Changes not staged' | wc -l)" -eq "1" ]]; then
-		printf "\033[7m !! \033[0m Fetching… Failed: your local reminders have unstaged changes."
+		info=$(printf "\033[7m !! \033[0m Fetching… Failed: your local reminders have unstaged changes.") && printf "%s" "$info"
 	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'up to date' | wc -l)" -eq "1" ]] && \
 		 [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'Changes not staged' | wc -l)" -eq "0" ]]; then
-		printf "\033[7m !! \033[0m Fetching… Nothing new to pull from git repository."
+		info=$(printf "\033[7m !! \033[0m Fetching… Nothing new to pull from git repository.") && printf "%s" "$info"
 	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'ahead' | wc -l)" -eq "1" ]]; then
-		printf "\033[7m !! \033[0m Fetching… Failed: your local reminders are ahead of the remote git repository."
+		info=$(printf "\033[7m !! \033[0m Fetching… Failed: your local reminders are ahead of the remote git repository.") && printf "%s" "$info"
 	    elif [[ "$(git remote update > /dev/null 2>&1 && git status | grep 'diverged' | wc -l)" -eq "1" ]]; then
-		printf "\033[7m !! \033[0m Fetching… Failed: your local reminders and the remote git repository have diverged."
+		info=$(printf "\033[7m !! \033[0m Fetching… Failed: your local reminders and the remote git repository have diverged.") && printf "%s" "$info"
 	    fi
 	fi
     fi
@@ -757,9 +759,10 @@ case "$1" in
             INPUT="$HOME/.reminders"
         else
             printf "Error: no data file found. Provide one as argument or \
-create one at '$HOME/.config/remind/reminders' or '$HOME/.reminders'. Those \
-can also be directories containing multiple data files, in which case remint \
-will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
+create one at '$HOME/.config/remind/reminders', '$HOME/.reminders' or any \
+path set in environment variable DOTREMINDERS. Those paths can also be \
+directories containing multiple data files, in which case remint will add \
+new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             read -rsn1 && exit 1
         fi
 	if [[ -d "$INPUT" && ! -f "$INPUT/100-remint.rem" ]]; then
@@ -774,7 +777,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+            info=$(printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
 	elif [[ -d "$INPUT" && -f "$INPUT/100-remint.rem" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
@@ -782,7 +785,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+            info=$(printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
 	elif [[ -f "$INPUT" ]]; then
             FILE="$INPUT"
@@ -790,7 +793,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+            info=$(printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
 	fi
 	if [[ "$AUTOSYNC" = "yes" ]]; then
@@ -822,7 +825,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+            info=$(printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
 	elif [[ -d "$1" && -f "$1/100-remint.rem" ]]; then
                 INPUT="$1"
@@ -831,7 +834,7 @@ will add new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 		output==$(clear; page)
 		printf "$output"
 		tput cup $((LINES-2)) 28
-		printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. $config" ${FILE/#$HOME/'~'}
+		info=$(printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
 		sleep $INFODURATION
         else
             printf "\033[1mError:\033[0m invalid data file. Press any key to quit."
