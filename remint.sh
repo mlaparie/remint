@@ -98,7 +98,7 @@ $indent   \033[7m   f \033[0m  Toggle fixed/collapsed cell spacing
 $indent   \033[7m   i \033[0m  Invert terminal background and foreground colors
 $indent   \033[7m   c \033[0m  Toggle Remind colors
 $indent   \033[7m 0-9 \033[0m  Adjust duration (in s) of temporary messages (e.g. git, back up)
-$indent   \033[7m   ; \033[0m  Show last temporary info message again
+$indent   \033[7m   ; \033[0m  Show last info message again
 
 $indent DATA
 $indent   \033[7m   a \033[0m  Add event at selected day 
@@ -552,6 +552,12 @@ ui() {
 }
 
 overview() {
+    if ! type cal >/dev/null 2>&1 || ! cal -V | grep -q 'util-linux'; then
+	tput cup $((LINES-2)) 28
+        info=$(printf "\033[7m !! \033[0m The overview mode requires 'cal' from package 'util-linux'.") && printf "%s" "$info"
+	sleep $INFODURATION
+	ui
+    fi
     remintcal=$(mktemp)
     while :; do
         checkgeom
@@ -749,6 +755,10 @@ checkgeom() {
 }
 
 # Execution
+if ! type remind >/dev/null 2>&1; then
+    printf "\033[1mError:\033[0m 'remind' not found; this is a mandatory dependency."
+    exit
+fi
 case "$1" in
     "")
 	if [[ -n "$DOTREMINDERS" ]] && [[ -e "$DOTREMINDERS" ]]; then
