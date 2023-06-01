@@ -65,7 +65,7 @@ MSPAN=$MONTHSPAN
 # Functions
 statichelp() {
     clear
-    tput cup $((((LINES/2))-19))
+    tput cup $((LINES/2)), $((COLS/2))
     printf "
 $indent                                             88                ,d
 $indent                                             °°                88     
