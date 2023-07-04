@@ -779,7 +779,7 @@ directories containing multiple data files, in which case remint will add \
 new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             read -rsn1 && exit 1
         fi
-	if [[ -d "$INPUT" && ! -f "$INPUT/100-remint.rem" ]]; then
+	if [[ -d "$INPUT" && ! -f "$INPUT/$DEFAULTFILE" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
             printf ";; Events\n\n" > "$FILE"
 #            for f in "$INPUT"/*; do
@@ -793,7 +793,7 @@ new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 	    tput cup $((LINES-2)) 28
             info=$(printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
-	elif [[ -d "$INPUT" && -f "$INPUT/100-remint.rem" ]]; then
+	elif [[ -d "$INPUT" && -f "$INPUT/$DEFAULTFILE" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
 	    source_config
             output=$(clear; page)
@@ -826,7 +826,7 @@ new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
         if [[ -f "$1" ]]; then
             INPUT="$1"
             FILE="$INPUT"
-	elif [[ -d "$1" && ! -f "$1/100-remint.rem" ]]; then
+	elif [[ -d "$1" && ! -f "$1/$DEFAULTFILE" ]]; then
             INPUT="$1"
             FILE="$INPUT/$DEFAULTFILE"
             printf ";; Events\n\n" > "$FILE"
@@ -841,7 +841,7 @@ new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
 	    tput cup $((LINES-2)) 28
             info=$(printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
-	elif [[ -d "$1" && -f "$1/100-remint.rem" ]]; then
+	elif [[ -d "$1" && -f "$1/$DEFAULTFILE" ]]; then
                 INPUT="$1"
                 FILE="$INPUT/$DEFAULTFILE"
 		source_config
