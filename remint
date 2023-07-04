@@ -79,32 +79,33 @@ $indent A simple terminal UI wrapper for D. Skoll's Remind calendar program
 
 $indent NAVIGATION
 $indent   \033[7m , p \033[0m  Prev page     \033[7m     g \033[0m  Go to (yyyy, yyyymmdd, yyyy-mm-dd)
-$indent   \033[7m . n \033[0m  Next page     \033[7m     t \033[0m  Go to Today
-$indent   \033[7m h/l \033[0m  -1/+1 day     \033[7m     o \033[0m  Navigate from year overview
+$indent   \033[7m . n \033[0m  Next page     \033[7m     t \033[0m  Go to today
+$indent   \033[7m h/l \033[0m  -1/+1 day     \033[7m     o \033[0m  Navigate from the year overview
 $indent   \033[7m k/j \033[0m  -1/+1 week    \033[7m     q \033[0m  Quit
 $indent   \033[7m M/m \033[0m  -1/+1 month   \033[7m other \033[0m  Quit with prompt
 $indent   \033[7m Y/y \033[0m  -1/+1 year    \033[7m     ? \033[0m  Show this help
 
 $indent VIEW
 $indent   \033[7m   v \033[0m  Toggle calendar/list views
-$indent   \033[7m w s \033[0m  Toggle week/month span modes
-$indent   \033[7m [/] \033[0m  Span -1/+1 week or month per page of current mode
-$indent   \033[7m r 0 \033[0m  Reset default page span of current mode
+$indent   \033[7m   w \033[0m  Toggle week/month span modes
+$indent   \033[7m [/] \033[0m  Span -1/+1 week (or month) per page (depending on current mode)
+$indent   \033[7m r 0 \033[0m  Reset to default page span for the current mode
 $indent   \033[7m   z \033[0m  Toggle Monday/Sunday as first day of the week
 $indent   \033[7m : x \033[0m  Toggle 24h format
 $indent   \033[7m   d \033[0m  Toggle day of the year and week number
 $indent   \033[7m   / \033[0m  Pipe to pager (e.g. to search pattern, press h for help)
-$indent   \033[7m   f \033[0m  Toggle fixed/collapsed cell spacing
+$indent   \033[7m   s \033[0m  Toggle fixed/collapsed cell spacing
 $indent   \033[7m   i \033[0m  Invert terminal background and foreground colors
 $indent   \033[7m   c \033[0m  Toggle Remind colors
-$indent   \033[7m 0-9 \033[0m  Adjust duration (in s) of temporary messages (e.g. git, back up)
+$indent   \033[7m 0-9 \033[0m  Duration (in s) of temporary messages (e.g. git, back up)
 $indent   \033[7m   ; \033[0m  Show last info message again
 
 $indent DATA
-$indent   \033[7m   a \033[0m  Add event at selected day 
-$indent   \033[7m   e \033[0m  Edit data file
-$indent   \033[7m   b \033[0m  Back up data
-$indent   \033[7m >/< \033[0m  Push/pull *.rem file(s) to/from git repository
+$indent   \033[7m   f \033[0m  Open another data file from the same directory
+$indent   \033[7m   a \033[0m  Add event at selected day in the current data file
+$indent   \033[7m   e \033[0m  Edit the current data file
+$indent   \033[7m   b \033[0m  Back up the current data file
+$indent   \033[7m >/< \033[0m  Push/pull data file(s) to/from git repository
 
 $indent © 2023 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 "
@@ -272,7 +273,7 @@ ui() {
                 fi
                 continue ;;
             
-            "W" | "w" | "S" | "s")
+            "W" | "w")
                 if [[ "$PREFIX" = "+" ]]; then 
                     PREFIX=""
                     SPACING=",0,0"
@@ -318,7 +319,7 @@ ui() {
                 fi
                 continue ;;
            
-            "F" | "f")
+            "S" | "s")
                 if [[ "$SPACING" = ",0,0" ]]; then
                     SPACING=""
                 else
