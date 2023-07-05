@@ -43,7 +43,7 @@ WEEKSPAN="4"        # Number of weeks to show by default in week view.
 MONTHSPAN="1"       # Number of months to show by default in month view.
 PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
                     # else if PREFIX="", then the default view shows months.
-SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
+SPACING=""          # SPACING="" for fixed cell spacing (see `s` toggle),
 		    # else SPACING=",n,m" where n and m are numbers.
 MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays.
 REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
@@ -61,34 +61,35 @@ CUSTOM=""           # Add any extra Remind arguments you may need here.
 ## Help
 ```
 NAVIGATION
-  , p  Prev page          t  Today
-  . n  Next page          g  Go to (yyyy, yyyymmdd, yyyy-mm-dd)
-  h/l  -1/+1 day          o  Navigate from year overview
+  , p  Prev page          g  Go to (yyyy, yyyymmdd, yyyy-mm-dd)
+  . n  Next page          t  Go to today
+  h/l  -1/+1 day          o  Navigate from the year overview
   k/j  -1/+1 week         q  Quit
   M/m  -1/+1 month    other  Quit with prompt
-  Y/y  -1/+1 year
+  Y/y  -1/+1 year         ?  Show this help
 
 VIEW
     v  Toggle calendar/list views
-  w s  Toggle week/month span modes
-  [/]  Span -1/+1 week or month per page of current mode
-    r  Reset default page span of current mode
+    w  Toggle week/month span modes
+  [/]  Span -1/+1 week (or month) per page (depending on current mode)
+  r 0  Reset to default page span for the current mode
     z  Toggle Monday/Sunday as first day of the week
   : x  Toggle 24h format
     d  Toggle day of the year and week number
-    /  Pipe to pager (e.g. to search pattern, press h for help))
-    f  Toggle fixed/collapsed cell spacing
+    /  Pipe to pager (e.g. to search pattern, press h for help)
+    s  Toggle fixed/collapsed cell spacing
     i  Invert terminal background and foreground colors
     c  Toggle Remind colors
-  0-9  Adjust duration (in s) of temporary messages (e.g. git, back up)
-    ?  Show this help
+  0-9  Duration (in s) of temporary messages (e.g. git, back up)
+    ;  Show last info message again
 
-DATA
-    a  Add event at selection
-    e  Edit data file
-    b  Back up data
-    >  Push *.rem file(s) to git repository
-    <  Pull *.rem file(s) from git repository
+$indent DATA
+    f  Load another data (or configuration) file
+    a  Add event at selected day in the current data file
+    e  Edit the current data file
+    b  Back up the current data file
+  >/<  Push/pull data file(s) to/from git repository
+    u  Show git version history
 
 © 2023 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 ```

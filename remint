@@ -42,7 +42,7 @@ WEEKSPAN="4"        # Number of weeks to show by default in week view.
 MONTHSPAN="1"       # Number of months to show by default in month view.
 PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
                     # else if PREFIX="", then the default view shows months.
-SPACING=""          # SPACING="" for fixed cell spacing (see `f` toggle),
+SPACING=""          # SPACING="" for fixed cell spacing (see `s` toggle),
 		    # else SPACING=",n,m" where n and m are numbers.
 MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays.
 REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
@@ -57,7 +57,7 @@ AUTOSYNC="no"       # "yes" to automatically synchronize from and to git
 CUSTOM=""           # Add any extra Remind arguments you may need here.
 
 # Initialization
-sleep 0.05 # Give the terminal some time to spawn if not already opened
+sleep 0.1 # Give the terminal some time to spawn if not already opened
 REF=$(date "+%Y-%m-%d")
 WSPAN=$WEEKSPAN
 MSPAN=$MONTHSPAN
@@ -101,11 +101,12 @@ $indent   \033[7m 0-9 \033[0m  Duration (in s) of temporary messages (e.g. git, 
 $indent   \033[7m   ; \033[0m  Show last info message again
 
 $indent DATA
-$indent   \033[7m   f \033[0m  Open another data file from the same directory
+$indent   \033[7m   f \033[0m  Load another data (or configuration) file
 $indent   \033[7m   a \033[0m  Add event at selected day in the current data file
 $indent   \033[7m   e \033[0m  Edit the current data file
 $indent   \033[7m   b \033[0m  Back up the current data file
 $indent   \033[7m >/< \033[0m  Push/pull data file(s) to/from git repository
+$indent   \033[7m   u \033[0m  Show git version history
 
 $indent © 2023 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 "
@@ -132,6 +133,8 @@ page() {
     unset REPLY
     if [[ "$COLORINVERTED" = "yes" ]]; then
         printf '\e[?5h'
+    else
+	printf '\e[?5l'
     fi
 
     if [[ "${REF:0:4}" -lt "1990" ]]; then
@@ -327,6 +330,44 @@ ui() {
                 fi
                 continue ;;
 
+	    "F" | "f")
+		clear
+		if [[ -d "$INPUT" ]]; then
+		    cd ${INPUT}
+		    printf "Files in '%s':\n" "$INPUT"
+		elif [[ -f "$INPUT" ]]; then
+		    cd "$(dirname ${INPUT})"
+		    printf "Files in '%s':\n" "$(dirname ${INPUT})"
+		fi
+		tree
+		tput cup $((LINES-2)) 28
+		printf "\n\033[7m >_ \033[0m \033[1mEnter relative or absolute path to the file to load:\033[0m "
+		read -re LOAD
+		case "$LOAD" in
+		    /*)
+			pathprefix="" ;;
+		    *)
+			pathprefix="${PWD}/" ;;
+		esac
+		if [[ ! -e ${pathprefix}${LOAD} ]] || [[ -d ${pathprefix}${LOAD} ]]; then
+		    info=$(printf "\033[7m !! \033[0m \033[1mError:\033[0m file not found: '%s'. Reloading previous file." "${LOAD}")
+		elif [[ "$LOAD" == *.conf ]]; then
+		    config=${pathprefix}${LOAD}
+		    source_config
+		    info=$(printf "\033[7m >_ \033[0m \033[1mConfiguration file loaded:\033[0m '%s'." "${config}")
+		else
+		    INPUT=${pathprefix}${LOAD}
+		    FILE="$INPUT"
+		    info=$(printf "\033[7m >_ \033[0m \033[1mData file loaded:\033[0m '%s'." "${FILE}")
+		fi
+		output=$(clear; page)
+		printf "$output"
+		tput cup $((LINES-2)) 28
+		printf "%s" "$info"
+		cd - > /dev/null 2>&1
+		sleep $INFODURATION
+		ui ;;
+
             "A" | "a")
                 if [[ "$COLORINVERTED" = "yes" ]]; then
                     invertcolors
@@ -462,6 +503,10 @@ ui() {
             "<")
 		gitsync "pull"
                 sleep $INFODURATION
+		ui ;;
+
+	    "U" | "u")
+		gitsync "log"
 		ui ;;
 
             "0")
@@ -644,9 +689,9 @@ goto() {
 
 gitsync() {
     tput cup $((LINES-2)) 28
-    if [[ "$1" = "push" ]]; then
+    if [[ "$1" = "log" ]]; then
 	if [[ "$INPUT" = "$FILE" ]]; then
-	    info=$(printf "\033[7m !! \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS').") && printf "%s" "$info"
+	    info=$(printf "\033[7m !! \033[0m The 'git log' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS').") && printf "%s" "$info"
 	elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
 	    up="/.."
 	elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
@@ -656,12 +701,43 @@ gitsync() {
 	    info=$(printf "\033[7m !! \033[0m Your Remind data is not in a git folder, you must 'git init' first.") && printf "%s" "$info"
 	elif [[ -d "$INPUT""$up""/.git" ]]; then
 	    cd ${INPUT}${up}
-	    git add *.rem reminders/*.rem
+	    clear
+            printf "\033[7m Version history (last 5 git commits) \033[0m\n\n"
+	    #    git log --max-count=5 --oneline --patch --unified=0
+	    git log --max-count=5 --date=short --pretty=format:"%C(yellow)%h %Cblue%>(12)%ad %Cgreen%<(7)%aN%Cred%d %Creset%s"
+	    printf "\n\033[7m Detail of changes \033[0m\n\n"
+	    git log --max-count=5 --date=short --pretty=format:"%C(yellow)%h" --patch -U0 | awk '!/^(index|@@|\-\-\-|\+\+\+|[-+]{3})/ || /diff --git/' | sed 's/diff --git/\x1b[1A\x1b[9C/'
+
+	    printf "\n"
+
+	    #format:"%h%x09%an%x09%ad%x09%s"
+	    tput cup $((LINES-2)) 28
+	    printf "\n\033[7m >_ \033[0m \033[1mPress any key to continue.\033[0m"
+	    read -rsn1
+	    cd - > /dev/null 2>&1
+	    printf "$output"
+	    tput cup $((LINES-2)) 28
+	fi
+    elif [[ "$1" = "push" ]]; then
+
+	# Check if the given path is within a Git repository
+	local git_dir=$(git -C "$FILE" rev-parse --show-toplevel 2>/dev/null)
+	if [[ -n "$git_dir" ]]; then
+            cd "$git_dir" || return
+            if [[ -f "$INPUT" ]]; then
+		git add -u "$(dirname ${INPUT})"
+            else
+		git add -u "$INPUT"
+            fi
 	    if [[ "$(git status --untracked-files=no | grep 'ahead' | wc -l)" -eq "1" ]] || \
-	       [[ "$(git status --untracked-files=no | grep 'Changes to be committed' | wc -l)" -eq "1" ]]; then
+		   [[ "$(git status --untracked-files=no | grep 'Changes to be committed' | wc -l)" -eq "1" ]]; then
 		clear
+		printf "\033[7m Synchronization (git pushing) \033[0m\n\n"
 		git commit -m "Updated from Remint, $USER@$(hostname)"
 		git push || err=1
+		tput cup $((LINES-2)) 28
+		printf "\n\033[7m >_ \033[0m \033[1mPress any key to continue.\033[0m"
+		read -rsn1
 		cd - > /dev/null 2>&1
 		printf "$output"
 		tput cup $((LINES-2)) 28
@@ -677,7 +753,48 @@ gitsync() {
 		tput cup $((LINES-2)) 28
 		info=$(printf "\033[7m !! \033[0m Nothing new to push to git repository.") && printf "%s" "$info"
 	    fi
+	else
+	    info=$(printf "\033[7m !! \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS').") && printf "%s" "$info"
 	fi
+	# Check if the given path is within a Git repository
+	
+	# if [[ "$INPUT" = "$FILE" ]]; then
+	#     info=$(printf "\033[7m !! \033[0m The 'git push' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS').") && printf "%s" "$info"
+	# elif [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
+	#     up="/.."
+	# elif ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]]; then
+	#     up=""
+	# fi
+        # if [[ -d "$INPUT" ]] && ! [[ -d "$INPUT""$up""/.git" ]]; then
+	#     info=$(printf "\033[7m !! \033[0m Your Remind data is not in a git folder, you must 'git init' first.") && printf "%s" "$info"
+	# elif [[ -d "$INPUT""$up""/.git" ]]; then
+	#     cd ${INPUT}${up}
+	#     git add *.rem reminders/*.rem
+	#     if [[ "$(git status --untracked-files=no | grep 'ahead' | wc -l)" -eq "1" ]] || \
+	#        [[ "$(git status --untracked-files=no | grep 'Changes to be committed' | wc -l)" -eq "1" ]]; then
+	# 	clear
+	# 	printf "\033[7m Synchronization (git pushing) \033[0m\n\n"
+	# 	git commit -m "Updated from Remint, $USER@$(hostname)"
+	# 	git push || err=1
+	# 	tput cup $((LINES-2)) 28
+	# 	printf "\n\033[7m >_ \033[0m \033[1mPress any key to continue.\033[0m"
+	# 	read -rsn1
+	# 	cd - > /dev/null 2>&1
+	# 	printf "$output"
+	# 	tput cup $((LINES-2)) 28
+	# 	if [[ "$err" -eq "1" ]]; then
+	# 	    info=$(printf "\033[7m !! \033[0m Failed to push to git repository; try git manually to troubleshoot.") && printf "%s" "$info"
+	# 	else
+	# 	    info=$(printf "\033[7m >_ \033[0m Data successfully pushed to git repository.") && printf "%s" "$info"
+	# 	fi
+	#     elif [[ "$(git status --untracked-files=no | grep 'Changes not staged' | wc -l)" -eq "1" ]]; then
+	# 	tput cup $((LINES-2)) 28
+	# 	info=$(printf "\033[7m !! \033[0m Nothing new in .rem files to push to git repository, but you have unstaged changes in other files.") && printf "%s" "$info"		
+	#     else
+	# 	tput cup $((LINES-2)) 28
+	# 	info=$(printf "\033[7m !! \033[0m Nothing new to push to git repository.") && printf "%s" "$info"
+	#     fi
+	# fi
     elif [[ "$1" = "pull" ]]; then
 	if [[ -f "$INPUT" ]]; then
 	    info=$(printf "\033[7m !! \033[0m The 'git pull' feature requires using a data folder ('~/.reminders/', '~/.config/remind/' or 'DOTREMINDERS').") && printf "%s" "$info"
@@ -714,20 +831,23 @@ gitsync() {
 	    fi
 	fi
     fi
+    sleep $INFODURATION
 }
 
 source_config() {
-    if [[ -f "$(dirname "$(realpath -s "$0")")/remint.conf" ]]; then
-	config="\033[1mConfiguration:\033[0m $(dirname "$(realpath -s "$0")")/remint.conf."
-	source $(dirname "$(realpath -s "$0")")/remint.conf
+    if [[ -n "$config" ]]; then
+	source ${config}
+    elif [[ -f "$(dirname "$(realpath -s "$0")")/remint.conf" ]]; then
+	config="\n\033[1m ?  Help                         Configuration:\033[0m '$(dirname "$(realpath -s "$0")")/remint.conf'."
+	source "$(dirname "$(realpath -s "$0")")/remint.conf"
     elif [[ -d "$INPUT" ]] && [[ "$INPUT" = "$HOME/.config/remind/reminders" ]] && [[ -f "$INPUT/../remint.conf" ]]; then
-	config="\033[1mConfiguration:\033[0m $HOME/.config/remind/remint.conf."
-	source ${INPUT}/../remint.conf
+	config="\n ?  Help\033[1m                         Configuration:\033[0m '$HOME/.config/remind/remint.conf'."
+	source "${INPUT}/../remint.conf"
     elif [[ -d "$INPUT" ]] && ! [[ "$INPUT" = "$HOME/.config/remind/reminders" ]] && [[ -f "$INPUT/remint.conf" ]]; then
-	config="\033[1mConfiguration:\033[0m $INPUT/remint.conf."
-	source ${INPUT}/remint.conf
+	config="\n ?  Help\033[1m                         Configuration:\033[0m '$INPUT/remint.conf'."
+	source "${INPUT}/remint.conf"
     else
-	config="No remint.conf found, using defaults from the script."
+	config="\n ?  Help\033[1m                         Configuration:\033[0m No remint.conf found, using defaults from the script."
     fi
     config=${config/$HOME/'~'}
     WSPAN=$WEEKSPAN
@@ -791,7 +911,7 @@ new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            info=$(printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
+            info=$(printf "\033[7m >_ \033[0m \033[1mNew data file created:\033[0m '%s'. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
 	elif [[ -d "$INPUT" && -f "$INPUT/$DEFAULTFILE" ]]; then
             FILE="$INPUT/$DEFAULTFILE"
@@ -799,7 +919,7 @@ new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            info=$(printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
+            info=$(printf "\033[7m >_ \033[0m \033[1mData:\033[0m '%s'. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
 	elif [[ -f "$INPUT" ]]; then
             FILE="$INPUT"
@@ -807,7 +927,7 @@ new events to ./%s by default. Press any key to quit." "$DEFAULTFILE"
             output=$(clear; page)
             printf "$output"
 	    tput cup $((LINES-2)) 28
-            info=$(printf "\033[7m >_ \033[0m \033[1mData:\033[0m %s. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
+            info=$(printf "\033[7m >_ \033[0m \033[1mData:\033[0m '%s'. ${config}" "${FILE/#$HOME/'~'}") && printf "%s" "$info"
             sleep $INFODURATION
 	fi
 	if [[ "$AUTOSYNC" = "yes" ]]; then
