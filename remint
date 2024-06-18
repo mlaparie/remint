@@ -27,24 +27,27 @@
 # SOFTWARE.
 
 # Configuration
-# Variables below can be toggled from the TUI, those are the default values
-# They can be altered here directly, or placed into a 'remint.conf' file
-# alongside 'remint.sh' or in your Remind data directory (~/.reminders,
-# ~/.config/remind, or one set in DOTREMINDERS) to persist after updates.
+# Most variables below can be toggled from the TUI, those are the default
+# values. They can be altered here directly, or placed into a 'remint.conf'
+# file alongside 'remint.sh' or in your Remind data directory (~/.reminders/,
+# ~/.config/remind/, or one set in DOTREMINDERS) to persist after updates.
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
-			     # data path is a directory
+			     # the Remind data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only.
 FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm.
 VIEW="calendar"     # VIEW="list" to display the agenda by default.
 COLORINVERTED="no"  # COLORINVERTED="yes" to toggle light/dark default mode.
 SHOWDOYWOY="yes"    # SHOWDOYWOY="no" to hide day of year and week number.
+WEEKNUMBERTYPE="V"  # "V" for ISO numbering, "W" for non-ISO and Monday as
+                    # first day of the week, "U" for non-ISO and Sunday as
+                    # first day of the week.
 WEEKSPAN="4"        # Number of weeks to show by default in week view.
 MONTHSPAN="1"       # Number of months to show by default in month view.
 PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
                     # else if PREFIX="", then the default view shows months.
-SPACING=""          # SPACING="" for fixed cell spacing (see `s` toggle),
+SPACING=""          # SPACING="" for fixed cell spacing (see `s` binding),
 		    # else SPACING=",n,m" where n and m are numbers.
-MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays.
+FIRSTDAYOFWEEK="m"  # FIRSTDAYOFWEEK="s" to start weeks on Sundays.
 REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
 		    # search patterns or scroll long outputs. Beware that not
 		    # all pagers can handle Remind's color and escape colors
@@ -53,7 +56,7 @@ INFODURATION="1"    # Duration (in s) of displayed messages; the UI will be
                     # be unresponsive until info messages disappear.
 AUTOSYNC="no"       # "yes" to automatically synchronize from and to git
                     # at startup (git pull) and when quitting (git push), else
-                    #"no"; "yes" requires a reminders file in a git repository.
+                    # "no"; "yes" requires a reminders file in a git repository.
 CUSTOM=""           # Add any extra Remind arguments you may need here.
 
 # Initialization
@@ -61,6 +64,9 @@ sleep 0.1 # Give the terminal some time to spawn if not already opened
 REF=$(date "+%Y-%m-%d")
 WSPAN=$WEEKSPAN
 MSPAN=$MONTHSPAN
+if [[ "$FIRSTDAYOFWEEK" = "m" ]]; then
+    MONDAYFIRST="m" # We do this because setting FIRSTDAYOFWEEK="m" or "s" is
+fi                  # more straightforward, but Remind only acceps "m" or ""
 
 # Functions
 statichelp() {
@@ -108,7 +114,7 @@ $indent   \033[7m   b \033[0m  Back up the current data file
 $indent   \033[7m >/< \033[0m  Push/pull data file(s) to/from git repository
 $indent   \033[7m   u \033[0m  Show git version history
 
-$indent © 2023 Mathieu Laparie, <mlaparie@disr.it>, MIT license
+$indent © 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 "
 }
 
@@ -180,7 +186,7 @@ to $(date -d $REF+$((MSPAN-1))months '+%B %Y') \033[0m\n\n"
     
         tput cup $((LINES-2))
         if [[ "$SHOWDOYWOY" = "yes" ]]; then
-            DOY="($(date -d "$REF" "+D%j, W%U"))"
+            DOY="($(date -d "$REF" "+D%j, W%$WEEKNUMBERTYPE"))"
             printf "\033[7m > \033[0m %s $DOY \n ?  Help" "$REF"
         else
             printf "\033[7m > \033[0m %s \n ?  Help" "$REF"

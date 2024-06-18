@@ -33,28 +33,31 @@ Other short demos of the features are available [here](demo/remint.mp4) (some ba
 `remint` options can be toggled from the TUI, but the defaults can be edited at the beginning of the script, or placed into a `remint.conf` file either alongside `remint.sh` (same directory) or in your Remind data directory (`~/.reminders`, `~/.config/remind`, or a folder set in `DOTREMINDERS`) to make them persist after updates:
 ```
 DEFAULTFILE="100-remint.rem" # Default file to edit and add new events to if
-			     # data path is a directory
+			     # the Remind data path is a directory
 COLOR="-@2"         # COLOR="" to disable, COLOR="-@1" for 256 colors only.
 FORMAT="1"          # FORMAT="1" means 24h format, FORMAT="0" means am/pm.
 VIEW="calendar"     # VIEW="list" to display the agenda by default.
 COLORINVERTED="no"  # COLORINVERTED="yes" to toggle light/dark default mode.
 SHOWDOYWOY="yes"    # SHOWDOYWOY="no" to hide day of year and week number.
+WEEKNUMBERTYPE="V"  # "V" for ISO numbering, "W" for non-ISO and Monday as
+                    # first day of the week, "U" for non-ISO and Sunday as
+                    # first day of the week.
 WEEKSPAN="4"        # Number of weeks to show by default in week view.
 MONTHSPAN="1"       # Number of months to show by default in month view.
 PREFIX="+"          # If PREFIX="+", then the default view shows weeks,
                     # else if PREFIX="", then the default view shows months.
-SPACING=""          # SPACING="" for fixed cell spacing (see `s` toggle),
-		    # else SPACING=",n,m" where n and m are numbers.
-MONDAYFIRST="m"     # MONDAYFIRST="" to start weeks on Sundays.
+SPACING=""          # SPACING="" for fixed cell spacing (see `s` binding),
+       		    # else SPACING=",n,m" where n and m are numbers.
+FIRSTDAYOFWEEK="m"  # FIRSTDAYOFWEEK="s" to start weeks on Sundays.
 REMPAGER="less -Ri" # Or REMPAGER="$PAGER" to use your usual PAGER. Useful to
-		    # search patterns or scroll long outputs. Beware that not
-		    # all pagers can handle Remind's color and escape colors
+	            # search patterns or scroll long outputs. Beware that not
+	            # all pagers can handle Remind's color and escape colors
                     # correctly; "less -Ri" can.
 INFODURATION="1"    # Duration (in s) of displayed messages; the UI will be
                     # be unresponsive until info messages disappear.
 AUTOSYNC="no"       # "yes" to automatically synchronize from and to git
                     # at startup (git pull) and when quitting (git push), else
-                    #"no"; "yes" requires a reminders file in a git repository.
+                    # "no"; "yes" requires a reminders file in a git repository.
 CUSTOM=""           # Add any extra Remind arguments you may need here.
 ```
 
@@ -91,5 +94,5 @@ $indent DATA
   >/<  Push/pull data file(s) to/from git repository
     u  Show git version history
 
-© 2023 Mathieu Laparie, <mlaparie@disr.it>, MIT license
+© 2022 Mathieu Laparie, <mlaparie@disr.it>, MIT license
 ```
