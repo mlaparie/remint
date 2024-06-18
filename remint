@@ -713,9 +713,7 @@ gitsync() {
 	    git log --max-count=5 --date=short --pretty=format:"%C(yellow)%h %Cblue%>(12)%ad %Cgreen%<(7)%aN%Cred%d %Creset%s"
 	    printf "\n\033[7m Detail of changes \033[0m\n\n"
 	    git log --max-count=5 --date=short --pretty=format:"%C(yellow)%h" --patch -U0 | awk '!/^(index|@@|\-\-\-|\+\+\+|[-+]{3})/ || /diff --git/' | sed 's/diff --git/\x1b[1A\x1b[9C/'
-
 	    printf "\n"
-
 	    #format:"%h%x09%an%x09%ad%x09%s"
 	    tput cup $((LINES-2)) 28
 	    printf "\n\033[7m >_ \033[0m \033[1mPress any key to continue.\033[0m"
@@ -725,9 +723,8 @@ gitsync() {
 	    tput cup $((LINES-2)) 28
 	fi
     elif [[ "$1" = "push" ]]; then
-
 	# Check if the given path is within a Git repository
-	local git_dir=$(git -C "$FILE" rev-parse --show-toplevel 2>/dev/null)
+	local git_dir=$(git -C $(dirname "$FILE") rev-parse --show-toplevel 2>/dev/null)
 	if [[ -n "$git_dir" ]]; then
             cd "$git_dir" || return
             if [[ -f "$INPUT" ]]; then
