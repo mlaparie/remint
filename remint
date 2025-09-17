@@ -232,6 +232,19 @@ ui() {
             
             "J" | "j")
                 REF=$(date -d "$REF+1 week" "+%Y-%m-%d") && continue ;;
+
+	    $'\033') # Handle arrow keys (which send escape sequences of more than one character)
+		read -t.001 -n2 r
+		case "$r" in
+		    "[D")
+			REF=$(date -d "$REF-1 month" "+%Y-%m-%d") && continue ;;
+		    "[C")
+			REF=$(date -d "$REF+1 month" "+%Y-%m-%d") && continue ;;
+		    "[A")
+			REF=$(date -d "$REF-1 week" "+%Y-%m-%d") && continue ;;
+		    "[B")
+			REF=$(date -d "$REF+1 week" "+%Y-%m-%d") && continue ;;
+		esac ;;
             
             "h"| "H")
                 REF=$(date -d "$REF-1 day" "+%Y-%m-%d") && continue ;;
